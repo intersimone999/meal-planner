@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Nuova ricetta — menuapp{% endblock %}
+{% block content %}
+  <h1>Nuova ricetta</h1>
+
+  {% if error %}<p class="error">{{ error }}</p>{% endif %}
+
+  <form method="post" action="/recipes" class="recipe-form">
+    <label>
+      Nome
+      <input type="text" name="name" value="{{ name or '' }}" required autofocus maxlength="200">
+    </label>
+    <label>
+      Note <span class="hint">(opzionale)</span>
+      <textarea name="notes" rows="4">{{ notes or '' }}</textarea>
+    </label>
+    <div class="actions">
+      <button type="submit" class="button primary">Salva e continua</button>
+      <a class="button" href="/recipes">Annulla</a>
+    </div>
+  </form>
+
+  <p class="hint">Dopo il salvataggio potrai aggiungere gli ingredienti.</p>
+{% endblock %}

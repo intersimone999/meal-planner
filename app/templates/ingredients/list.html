@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Ingredienti — menuapp{% endblock %}
+{% block content %}
+  <h1>Ingredienti</h1>
+
+  {% if error %}<p class="error">{{ error }}</p>{% endif %}
+
+  {% if rows %}
+    <table class="ingredients">
+      <thead>
+        <tr><th>Nome</th><th>Uso</th><th>Azioni</th></tr>
+      </thead>
+      <tbody>
+        {% for ing, usage in rows %}
+          <tr>
+            <td>
+              <form method="post" action="/ingredients/{{ ing.id }}/rename" class="inline-form">
+                <input type="text" name="name" value="{{ ing.name }}" required maxlength="120">
+                <button type="submit" class="button">Rinomina</button>
+              </form>
+            </td>
+            <td>
+              {% if usage == 0 %}<em>non usato</em>
+              {% elif usage == 1 %}1 ricetta
+              {% else %}{{ usage }} ricette{% endif %}
+            </td>
+            <td>
+              <form method="post" action="/ingredients/{{ ing.id }}/delete" class="inline-form"
+                    onsubmit="return confirm('Eliminare l\'ingrediente «{{ ing.name }}»?');">
+                <button type="submit" class="button danger" {% if usage > 0 %}disabled title="Ancora usato in {{ usage }} ricett{{ 'a' if usage == 1 else 'e' }}"{% endif %}>Elimina</button>
+              </form>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p><em>Nessun ingrediente. Vengono creati automaticamente quando li aggiungi a una ricetta.</em></p>
+  {% endif %}
+{% endblock %}

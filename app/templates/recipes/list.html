@@ -1,14 +1,38 @@
 {% extends "base.html" %}
-{% block title %}Recipes — menuapp{% endblock %}
+{% block title %}Ricette — menuapp{% endblock %}
 {% block content %}
-  <h1>Recipes</h1>
+  <h1>Ricette</h1>
+  <p><a class="button" href="/recipes/new">+ Nuova ricetta</a></p>
+
   {% if recipes %}
-    <ul>
-      {% for r in recipes %}
-        <li>{{ r.name }} <small>({{ r.servings }} servings)</small></li>
-      {% endfor %}
-    </ul>
+    <table class="recipes">
+      <thead>
+        <tr><th>Nome</th><th>Ingredienti</th><th>Azioni</th></tr>
+      </thead>
+      <tbody>
+        {% for r in recipes %}
+          <tr>
+            <td><a href="/recipes/{{ r.id }}/edit">{{ r.name }}</a></td>
+            <td>
+              {% if r.ingredients %}
+                {% for link in r.ingredients %}<span class="chip">{{ link.ingredient.name }}</span>{% endfor %}
+              {% else %}
+                <em>nessuno</em>
+              {% endif %}
+            </td>
+            <td>
+              <a class="button" href="/recipes/{{ r.id }}/edit">Modifica</a>
+              <button class="button danger"
+                      hx-post="/recipes/{{ r.id }}/delete"
+                      hx-confirm="Eliminare la ricetta «{{ r.name }}»?"
+                      hx-target="closest tr"
+                      hx-swap="outerHTML">Elimina</button>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
   {% else %}
-    <p><em>No recipes yet.</em></p>
+    <p><em>Nessuna ricetta. Aggiungine una per iniziare.</em></p>
   {% endif %}
 {% endblock %}

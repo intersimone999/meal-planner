@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}{{ recipe.name }} — menuapp{% endblock %}
+{% block content %}
+  <h1>Modifica ricetta</h1>
+
+  {% if error %}<p class="error">{{ error }}</p>{% endif %}
+
+  <form method="post" action="/recipes/{{ recipe.id }}" class="recipe-form">
+    <label>
+      Nome
+      <input type="text" name="name" value="{{ recipe.name }}" required maxlength="200">
+    </label>
+    <label>
+      Note <span class="hint">(opzionale)</span>
+      <textarea name="notes" rows="4">{{ recipe.notes or '' }}</textarea>
+    </label>
+    <div class="actions">
+      <button type="submit" class="button primary">Salva modifiche</button>
+      <a class="button" href="/recipes">Torna alle ricette</a>
+    </div>
+  </form>
+
+  <form method="post" action="/recipes/{{ recipe.id }}/delete" class="delete-form"
+        onsubmit="return confirm('Eliminare la ricetta «{{ recipe.name }}»?');">
+    <button type="submit" class="button danger">Elimina ricetta</button>
+  </form>
+
+  <section class="ingredients-section">
+    <h2>Ingredienti</h2>
+
+    <div id="chips" class="chips">
+      {% for link in recipe.ingredients %}
+        {% include "recipes/_chip.html" with context %}
+      {% endfor %}
+    </div>
+
+    <form hx-post="/recipes/{{ recipe.id }}/ingredients"
+          hx-target="#chips"
+          hx-swap="beforeend"
+          hx-on::after-request="this.reset(); this.querySelector('input').focus();"
+          class="add-ingredient">
+      <input type="text" name="name" list="ingredient-options"
+             placeholder="Aggiungi ingrediente e premi Invio"
+             autocomplete="off" required maxlength="120">
+      <button type="submit" class="button">Aggiungi</button>
+    </form>
+
+    <datalist id="ingredient-options">
+      {% for i in all_ingredients %}
+        <option value="{{ i.name }}">
+      {% endfor %}
+    </datalist>
+  </section>
+{% endblock %}
