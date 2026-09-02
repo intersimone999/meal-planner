@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Shopping — {{ year }}-W{{ '%02d' % week }}{% endblock %}
+{% block content %}
+  <h1>Shopping list — week {{ week }} of {{ year }}</h1>
+
+  <section class="derived">
+    <h2>From the menu plan</h2>
+    {% if derived %}
+      <ul>
+        {% for item in derived %}
+          <li>{{ item.quantity }} {{ item.unit }} {{ item.name }}</li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p><em>Nothing planned yet, or aggregation not yet implemented.</em></p>
+    {% endif %}
+  </section>
+
+  <section class="manual">
+    <h2>Manual items</h2>
+    {% if manual %}
+      <ul>
+        {% for item in manual %}
+          <li{% if item.checked %} class="checked"{% endif %}>
+            {% if item.quantity %}{{ item.quantity }}{% endif %}
+            {% if item.unit %}{{ item.unit }}{% endif %}
+            {{ item.name }}
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p><em>No manual items yet.</em></p>
+    {% endif %}
+  </section>
+{% endblock %}

@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}Recipes — menuapp{% endblock %}
+{% block content %}
+  <h1>Recipes</h1>
+  {% if recipes %}
+    <ul>
+      {% for r in recipes %}
+        <li>{{ r.name }} <small>({{ r.servings }} servings)</small></li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p><em>No recipes yet.</em></p>
+  {% endif %}
+{% endblock %}
