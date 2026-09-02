@@ -18,15 +18,19 @@ Greenfield repository — project scaffolding (venv, `requirements.txt`, `Docker
 - **Containerization:** the app must remain buildable and runnable via the root `Dockerfile`. Any new runtime dependency or filesystem expectation (env vars, mount points, exposed ports) must be reflected there.
 - **Git cadence:** commit after each substantial modification — a new feature, a non-trivial refactor, a dependency change, initial scaffolding of a subsystem. Small in-progress edits can be batched into the next substantial commit. Never touch `git config` in this repo (the user's global config is authoritative).
 
-## Purpose (see SPEC.md §1–§3 for the authoritative version)
+## Purpose (see SPEC.md for the authoritative version)
 
-Self-hosted webapp for personal meal planning with three core capabilities:
+Self-hosted webapp for personal meal planning. Core capabilities:
 
-1. **Recipe library** — create/edit meals, each with a name, optional notes, and a **set of ingredient names**. No quantities, no units — recipes must be trivial to add.
-2. **Weekly menu planner** — assign recipes to fixed slots (breakfast/lunch/dinner) on a weekly calendar keyed by ISO year+week.
-3. **Shopping list** — two independent sections shown side by side:
-   - **Derived:** the distinct, sorted set of ingredient names appearing in any recipe planned for the selected week.
-   - **Manual:** a persistent list of recurring/pantry items the user manages by hand. Independent of any week's plan.
+1. **Recipe library** — name + optional notes + a **set of ingredient names**. No quantities, no units.
+2. **Weekly planner** — recipes assigned to fixed slots **{lunch, dinner}** on an ISO year+week grid (no breakfast — user handles that separately).
+3. **Reusable weekly templates** — named plans (e.g. "settimana standard") that can be applied to a specific week; applying **only fills empty cells**, never overwrites.
+4. **Shopping list** — two independent sections shown together:
+   - **Derived** from the plan, each item with a checkbox scoped to `(year, week)`. New week ⇒ fresh empty check state (auto-reset by design).
+   - **Manual** pantry list, persistent, independent of any week.
+5. **Import page + export** for recipes, ingredients, and templates as JSON.
+
+All user-facing text is **Italian**. Code, comments, and log messages stay in English.
 
 ## Tech stack
 
@@ -54,15 +58,21 @@ Docker:
 
 ## Architecture — the big picture
 
-### Domain model (see SPEC.md §5 for the canonical definitions)
+### Domain model (see SPEC.md §5 for canonical definitions)
 
 - `Ingredient` — canonical, deduplicated by name (case-insensitive).
 - `Recipe` — name + optional notes.
-- `RecipeIngredient` — join table only (recipe_id, ingredient_id). No quantity, no unit. Unique per (recipe, ingredient).
-- `PlannedMeal` — (year, week, day, slot, recipe). Unique per (year, week, day, slot); a slot holds at most one recipe.
-- `ManualShoppingItem` — persistent, user-managed pantry item (name, checked flag). Not tied to any week.
+- `RecipeIngredient` — join table (recipe_id, ingredient_id). No quantity, no unit. Unique per (recipe, ingredient).
+- `PlannedMeal` — (year, week, day, slot, recipe). Unique per (year, week, day, slot). Slot ∈ {lunch, dinner}.
+- `MealPlanTemplate` + `TemplateSlot` — same shape as `PlannedMeal` but without (year, week). Templates get "applied" to a week, filling empty slots only.
+- `ManualShoppingItem` — persistent pantry item (name, checked flag). Not tied to any week.
+- `ShoppingCheck` — (year, week, ingredient_id). Presence of a row = that derived ingredient is checked for that week. Per-week scoping is what gives the "auto-reset on new week" behavior for free.
 
-The shopping list is **derived on the fly** for the "from the plan" section and **read directly** for the manual section. Never merge the two sections — see SPEC.md §3.4.
+**Never merge** the derived and manual shopping sections. See SPEC.md §3.5.
+
+### Auth (see SPEC.md §4.2)
+
+Form-based login with a signed session cookie (Starlette `SessionMiddleware`), credentials from `MENUAPP_USER` / `MENUAPP_PASSWORD`. If either env var is unset at startup, auth is fully bypassed and a warning is logged — this is the dev mode. `MENUAPP_SESSION_SECRET` signs the cookie; generated at startup with a warning if unset. `/healthz`, `/login`, `/logout`, and `/static/*` are always unauthenticated.
 
 ### Suggested layout
 
@@ -81,4 +91,12 @@ Routes should return full HTML pages for direct navigation and HTML **fragments*
 
 ### Data flow for the shopping list (reference)
 
-`GET /shopping/{year}/{week}` → (a) `SELECT DISTINCT ingredient.name FROM planned_meals JOIN recipe_ingredients ON ... JOIN ingredients ON ... WHERE year=? AND week=? ORDER BY ingredient.name` — this is the **derived** section; (b) load all `ManualShoppingItem` rows — this is the **manual** section. Render both in `shopping/index.html` as two distinct sections. The derived section is read-only for that week; the manual section supports add/toggle/delete via HTMX endpoints (`POST/DELETE /shopping/manual/...`) that only ever touch `ManualShoppingItem`.
+`GET /shopping/{year}/{week}` →
+- **Derived section:** `SELECT DISTINCT ingredient.id, ingredient.name FROM planned_meals JOIN recipe_ingredients ON ... JOIN ingredients ON ... WHERE year=? AND week=? ORDER BY ingredient.name`. Then LEFT JOIN `ShoppingCheck` on `(year, week, ingredient_id)` to determine each item's checkbox state. Sort checked items to the bottom in the template.
+- **Manual section:** load all `ManualShoppingItem` rows.
+
+Both rendered in `shopping/index.html` as two distinct sections. Toggling a derived checkbox is `POST /shopping/{year}/{week}/check/{ingredient_id}` (creates a `ShoppingCheck` row) / `DELETE ...` (removes it). Manual items use `POST/DELETE /shopping/manual/...` and only ever touch `ManualShoppingItem`.
+
+### Template application (reference)
+
+`POST /templates/{id}/apply` with form field `week` (`YYYY-Www` or `year=&week=`) → for each `TemplateSlot`, `INSERT ... ON CONFLICT DO NOTHING` into `planned_meals(year, week, day, slot, recipe_id)`. The unique constraint on `(year, week, day, slot)` gives fill-empty-only semantics for free. Never `INSERT OR REPLACE` here.
