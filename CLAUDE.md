@@ -2,9 +2,15 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Source of truth
+
+**Read [`SPEC.md`](./SPEC.md) first.** It is the authoritative specification for what this app must do. Every implementation decision must be traceable to a requirement there. If a task appears to require something the spec doesn't cover — or contradicts — **stop and update `SPEC.md` first, with the user's approval**, before writing code. Do not silently expand scope.
+
+CLAUDE.md (this file) is guidance for *how* to work in the repo; SPEC.md is the contract for *what* to build.
+
 ## Status
 
-Greenfield repository — project scaffolding (venv, `requirements.txt`, `Dockerfile`, `.gitignore`) is in place, but no application code exists yet. The sections below describe the **intended** architecture agreed with the user before implementation began. Update this file as reality diverges from the plan.
+Greenfield repository — project scaffolding (venv, `requirements.txt`, `Dockerfile`, `.gitignore`) and a stub FastAPI skeleton with placeholder routes are in place. Feature implementation has not begun. The sections below describe the **intended** architecture aligned with `SPEC.md`. Update this file as reality diverges from the plan.
 
 ## Working conventions for this repo
 
@@ -12,15 +18,15 @@ Greenfield repository — project scaffolding (venv, `requirements.txt`, `Docker
 - **Containerization:** the app must remain buildable and runnable via the root `Dockerfile`. Any new runtime dependency or filesystem expectation (env vars, mount points, exposed ports) must be reflected there.
 - **Git cadence:** commit after each substantial modification — a new feature, a non-trivial refactor, a dependency change, initial scaffolding of a subsystem. Small in-progress edits can be batched into the next substantial commit. Never touch `git config` in this repo (the user's global config is authoritative).
 
-## Purpose
+## Purpose (see SPEC.md §1–§3 for the authoritative version)
 
 Self-hosted webapp for personal meal planning with three core capabilities:
 
-1. **Recipe library** — create/edit meals, each composed of ingredients with quantity + unit.
-2. **Weekly menu planner** — assign recipes to slots on a weekly calendar (day × meal-slot).
-3. **Shopping list** — two parts merged into one view:
-   - **Derived part:** consolidated ingredient list computed from the meals planned for a given week, aggregating quantities across recipes and (when possible) across units.
-   - **Manual part:** a persistent list of recurring/pantry items the user adds, removes, and manages by hand (e.g. milk, coffee, dish soap). Independent of any week's plan.
+1. **Recipe library** — create/edit meals, each with a name, optional notes, and a **set of ingredient names**. No quantities, no units — recipes must be trivial to add.
+2. **Weekly menu planner** — assign recipes to fixed slots (breakfast/lunch/dinner) on a weekly calendar keyed by ISO year+week.
+3. **Shopping list** — two independent sections shown side by side:
+   - **Derived:** the distinct, sorted set of ingredient names appearing in any recipe planned for the selected week.
+   - **Manual:** a persistent list of recurring/pantry items the user manages by hand. Independent of any week's plan.
 
 ## Tech stack
 
@@ -48,23 +54,15 @@ Docker:
 
 ## Architecture — the big picture
 
-### Domain model
+### Domain model (see SPEC.md §5 for the canonical definitions)
 
-The three features are unified by a small domain that a future Claude should internalize before editing:
+- `Ingredient` — canonical, deduplicated by name (case-insensitive).
+- `Recipe` — name + optional notes.
+- `RecipeIngredient` — join table only (recipe_id, ingredient_id). No quantity, no unit. Unique per (recipe, ingredient).
+- `PlannedMeal` — (year, week, day, slot, recipe). Unique per (year, week, day, slot); a slot holds at most one recipe.
+- `ManualShoppingItem` — persistent, user-managed pantry item (name, checked flag). Not tied to any week.
 
-- `Ingredient` — a canonical pantry item (name, default unit). Deduplicated so the shopping list can aggregate.
-- `Recipe` — a named meal with a collection of `RecipeIngredient` rows (recipe_id, ingredient_id, quantity, unit).
-- `MenuPlan` / `PlannedMeal` — a week (ISO year+week) containing entries that assign a `Recipe` to a (day, slot) tuple, e.g. `(Monday, dinner) → Lasagna`.
-- `ManualShoppingItem` — a persisted, user-managed pantry/recurring item (name, quantity, unit, optional "checked" flag). CRUD lives with the user, not with any week.
-- `ShoppingList` — the composite view. **Not stored as a single entity.** For a given week it is the union of:
-  1. the **derived** aggregate over that week's `PlannedMeal` → `RecipeIngredient` rows, and
-  2. the current set of `ManualShoppingItem` rows.
-
-   The two parts should remain visually and logically separable in the UI so the user always knows which items came from the plan vs. which they added themselves. When an ingredient appears in both (e.g. "olive oil" is a recurring pantry item *and* used by this week's recipes), do **not** silently merge them — surface both and let the user reconcile. Silent merging hides intent and makes the manual list feel unreliable.
-
-### Unit aggregation
-
-Aggregating ingredients across recipes is the one non-trivial piece of logic. Two ingredients aggregate cleanly only when their units match (or are convertible: g↔kg, ml↔l). Design the aggregator so incompatible units for the same ingredient produce **two separate line items** rather than a silent error — the shopping list is user-facing and must degrade gracefully.
+The shopping list is **derived on the fly** for the "from the plan" section and **read directly** for the manual section. Never merge the two sections — see SPEC.md §3.4.
 
 ### Suggested layout
 
@@ -83,4 +81,4 @@ Routes should return full HTML pages for direct navigation and HTML **fragments*
 
 ### Data flow for the shopping list (reference)
 
-`GET /shopping/{year}/{week}` → (a) load `PlannedMeal` rows for the week, join `RecipeIngredient`, group by `(ingredient_id, unit)`, sum quantities — this is the **derived** section; (b) load all `ManualShoppingItem` rows — this is the **manual** section. Render both in `shopping_list.html` as two distinct sections. The derived section is read-only for that week; the manual section supports add/remove/check via HTMX endpoints (`POST/DELETE /shopping/manual/...`) that only ever touch `ManualShoppingItem`.
+`GET /shopping/{year}/{week}` → (a) `SELECT DISTINCT ingredient.name FROM planned_meals JOIN recipe_ingredients ON ... JOIN ingredients ON ... WHERE year=? AND week=? ORDER BY ingredient.name` — this is the **derived** section; (b) load all `ManualShoppingItem` rows — this is the **manual** section. Render both in `shopping/index.html` as two distinct sections. The derived section is read-only for that week; the manual section supports add/toggle/delete via HTMX endpoints (`POST/DELETE /shopping/manual/...`) that only ever touch `ManualShoppingItem`.
