@@ -4,3 +4,7 @@ jinja2>=3.1
 python-multipart>=0.0.12
 sqlalchemy>=2.0
 itsdangerous>=2.2
+
+# Test-only. Kept in the same file for the small scope of this app; if the
+# deployment image cares about size later, split into requirements-test.txt.
+pytest>=8
