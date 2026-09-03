@@ -39,7 +39,7 @@
             <span class="day-date">{{ date_labels[d] }}</span>
           </th>
           {% for slot in slots %}
-            {% set meal = grid.get((d, slot)) %}
+            {% set meals = grid.get((d, slot), []) %}
             {% include "planner/_cell.html" with context %}
           {% endfor %}
         </tr>

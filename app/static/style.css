@@ -334,6 +334,26 @@ tbody tr:hover td { background: var(--surface-alt); }
 
 .chip.plain { background: var(--surface-alt); color: var(--text-muted); }
 
+/* Recipe-type chips. Each type gets a distinct hue for at-a-glance recognition.
+   The saturation is kept soft so a row of chips doesn't overwhelm the page. */
+.chip.type-antipasto { background: #fdf2f8; color: #be185d; }
+.chip.type-primo     { background: #fef3c7; color: #a16207; }
+.chip.type-secondo   { background: #fee2e2; color: #b91c1c; }
+.chip.type-contorno  { background: #dcfce7; color: #166534; }
+.chip.type-frutta    { background: #ffedd5; color: #c2410c; }
+.chip.type-dolce     { background: #ede9fe; color: #6d28d9; }
+.chip.type-altro     { background: var(--surface-alt); color: var(--text-muted); }
+
+@media (prefers-color-scheme: dark) {
+  .chip.type-antipasto { background: #4a1730; color: #f9a8d4; }
+  .chip.type-primo     { background: #422a00; color: #fde68a; }
+  .chip.type-secondo   { background: #4d1717; color: #fca5a5; }
+  .chip.type-contorno  { background: #103524; color: #86efac; }
+  .chip.type-frutta    { background: #3d2007; color: #fdba74; }
+  .chip.type-dolce     { background: #2a1e4a; color: #c4b5fd; }
+  .chip.type-altro     { background: var(--surface-alt); color: var(--text-muted); }
+}
+
 /* Add-ingredient row */
 .add-row { display: flex; gap: 0.5rem; }
 .add-row input { flex: 1; }
@@ -361,20 +381,20 @@ table.planner .day-name { font-weight: 700; }
 table.planner .day-date { color: var(--text-muted); font-size: 0.75rem; font-weight: 400; }
 
 td.cell {
-  height: 3.5rem;
+  min-height: 3.5rem;
   padding: 0.4rem 0.55rem;
   position: relative;
-  vertical-align: middle;
+  vertical-align: top;
 }
 td.cell.empty { background: transparent; }
-td.cell.filled { background: var(--accent-soft); }
+td.cell.filled { background: var(--surface-alt); }
 td.cell.editing { background: var(--warning-soft); }
 tbody tr:hover td.cell { background: transparent; }
-tbody tr:hover td.cell.filled { background: var(--accent-soft); }
+tbody tr:hover td.cell.filled { background: var(--surface-alt); }
 tbody tr:hover td.cell.editing { background: var(--warning-soft); }
 
 .cell-add {
-  width: 100%; height: 100%;
+  width: 100%; height: 100%; min-height: 2.5rem;
   background: transparent;
   border: 1px dashed var(--border-strong);
   border-radius: var(--radius);
@@ -384,34 +404,71 @@ tbody tr:hover td.cell.editing { background: var(--warning-soft); }
   transition: background 120ms ease, color 120ms ease, border-color 120ms ease;
 }
 .cell-add:hover {
-  background: var(--surface-alt);
-  color: var(--accent);
-  border-color: var(--accent);
+  background: var(--surface); color: var(--accent); border-color: var(--accent);
 }
 
-.cell-recipe {
-  color: var(--text);
-  text-decoration: none;
-  font-weight: 500;
-  padding-right: 1.5rem;
-  display: inline-block;
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-  max-width: 100%;
-  vertical-align: middle;
-}
-.cell-recipe:hover { text-decoration: underline; }
-.cell-remove {
-  position: absolute; top: 0.3rem; right: 0.35rem;
-  background: transparent; border: 0;
-  color: var(--text-muted); cursor: pointer;
-  font-size: 1rem; line-height: 1;
-  padding: 0.15rem 0.35rem;
+/* Multi-dish list inside a planner/mealplan cell */
+.dish-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 0.25rem; }
+.dish-list.compact { margin-top: 0.15rem; }
+.dish {
+  display: flex; align-items: center; gap: 0.4rem;
+  padding: 0.2rem 0.35rem;
   border-radius: var(--radius-sm);
-  opacity: 0.7;
+  font-size: 0.9rem;
 }
-.cell-remove:hover { opacity: 1; color: var(--danger); background: var(--danger-soft); }
+.dish-type {
+  font-size: 0.65rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;
+  padding: 0.1rem 0.4rem; border-radius: var(--radius-full);
+  flex-shrink: 0;
+}
+/* Reuse the chip.type-* palette for dish-type badges */
+.dish-type.type-antipasto { background: #fdf2f8; color: #be185d; }
+.dish-type.type-primo     { background: #fef3c7; color: #a16207; }
+.dish-type.type-secondo   { background: #fee2e2; color: #b91c1c; }
+.dish-type.type-contorno  { background: #dcfce7; color: #166534; }
+.dish-type.type-frutta    { background: #ffedd5; color: #c2410c; }
+.dish-type.type-dolce     { background: #ede9fe; color: #6d28d9; }
+.dish-type.type-altro     { background: var(--surface-alt); color: var(--text-muted); }
+@media (prefers-color-scheme: dark) {
+  .dish-type.type-antipasto { background: #4a1730; color: #f9a8d4; }
+  .dish-type.type-primo     { background: #422a00; color: #fde68a; }
+  .dish-type.type-secondo   { background: #4d1717; color: #fca5a5; }
+  .dish-type.type-contorno  { background: #103524; color: #86efac; }
+  .dish-type.type-frutta    { background: #3d2007; color: #fdba74; }
+  .dish-type.type-dolce     { background: #2a1e4a; color: #c4b5fd; }
+  .dish-type.type-altro     { background: var(--surface-alt); color: var(--text-muted); }
+}
+.dish-name {
+  flex: 1; color: var(--text); text-decoration: none; font-weight: 500;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  min-width: 0;
+}
+a.dish-name:hover { text-decoration: underline; }
+.dish-remove {
+  background: transparent; border: 0;
+  color: var(--text-subtle); cursor: pointer;
+  padding: 0.15rem; border-radius: var(--radius-sm);
+  display: inline-flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.dish-remove .icon { width: 14px; height: 14px; }
+.dish-remove:hover { color: var(--danger); background: var(--danger-soft); }
+.dish.existing { opacity: 0.7; }
 
-.cell-edit-form { display: flex; flex-direction: column; gap: 0.35rem; }
+.cell-add-more {
+  display: inline-flex; align-items: center; gap: 0.3rem;
+  margin-top: 0.35rem;
+  background: transparent; border: 1px dashed var(--border-strong);
+  color: var(--text-muted); cursor: pointer;
+  padding: 0.25rem 0.55rem;
+  border-radius: var(--radius);
+  font-size: 0.8rem;
+  transition: background 120ms, color 120ms, border-color 120ms;
+}
+.cell-add-more:hover { background: var(--surface); color: var(--accent); border-color: var(--accent); }
+.cell-add-more .icon { width: 12px; height: 12px; }
+
+.cell-edit-form { display: flex; flex-direction: column; gap: 0.35rem; margin-top: 0.35rem; }
 .cell-edit-form select { padding: 0.3rem 0.4rem; font-size: 0.9rem; }
 .cell-actions { display: flex; gap: 0.35rem; }
 .cell-actions .button { padding: 0.2rem 0.55rem; font-size: 0.85rem; flex: 1; justify-content: center; }

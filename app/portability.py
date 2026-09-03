@@ -12,7 +12,7 @@ from typing import Any
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
-from app.i18n import SLOTS
+from app.i18n import RECIPE_TYPES, SLOTS
 from app.models import (
     Ingredient,
     MealPlanTemplate,
@@ -39,6 +39,7 @@ def export_all(session: Session) -> dict[str, Any]:
         recipes_data.append(
             {
                 "name": r.name,
+                "type": r.type,
                 "notes": r.notes,
                 "ingredients": sorted(link.ingredient.name for link in r.ingredients),
             }
@@ -50,12 +51,13 @@ def export_all(session: Session) -> dict[str, Any]:
         .order_by(MealPlanTemplate.name)
     ).all()
     for t in tpls:
+        # Sort by (day, slot, recipe) so multi-dish cells serialize deterministically.
         slots = sorted(
             (
                 {"day": s.day, "slot": s.slot, "recipe": s.recipe.name}
                 for s in t.slots
             ),
-            key=lambda s: (s["day"], s["slot"]),
+            key=lambda s: (s["day"], s["slot"], s["recipe"]),
         )
         templates_data.append({"name": t.name, "slots": slots})
     return {
@@ -116,12 +118,17 @@ def import_all(session: Session, data: dict[str, Any]) -> dict[str, int]:
         if not name:
             summary["invalid_rows"] += 1
             continue
+        type_val = raw.get("type")
+        if not isinstance(type_val, str) or type_val not in RECIPE_TYPES:
+            # Required per SPEC.md §3.1 — reject the recipe entirely.
+            summary["invalid_rows"] += 1
+            continue
         if session.scalar(select(Recipe).where(Recipe.name == name)):
             summary["recipes_skipped"] += 1
             continue
         notes_val = raw.get("notes")
         notes = notes_val.strip() if isinstance(notes_val, str) and notes_val.strip() else None
-        recipe = Recipe(name=name, notes=notes)
+        recipe = Recipe(name=name, type=type_val, notes=notes)
         session.add(recipe)
         session.flush()
         seen_ids: set[int] = set()
@@ -157,7 +164,7 @@ def import_all(session: Session, data: dict[str, Any]) -> dict[str, int]:
         tpl = MealPlanTemplate(name=name)
         session.add(tpl)
         session.flush()
-        seen_cells: set[tuple[int, str]] = set()
+        seen_cells: set[tuple[int, str, int]] = set()
         for s in raw.get("slots", []) or []:
             if not isinstance(s, dict):
                 summary["invalid_rows"] += 1
@@ -174,14 +181,16 @@ def import_all(session: Session, data: dict[str, Any]) -> dict[str, int]:
             if not isinstance(recipe_name, str) or not recipe_name.strip():
                 summary["invalid_rows"] += 1
                 continue
-            if (day, slot) in seen_cells:
-                summary["invalid_rows"] += 1
-                continue
             recipe = session.scalar(select(Recipe).where(Recipe.name == recipe_name.strip()))
             if not recipe:
                 summary["orphaned_slots"] += 1
                 continue
-            seen_cells.add((day, slot))
+            # Multi-dish cells allowed; only same recipe repeated in same cell blocked.
+            cell_key = (day, slot, recipe.id)
+            if cell_key in seen_cells:
+                summary["invalid_rows"] += 1
+                continue
+            seen_cells.add(cell_key)
             session.add(
                 TemplateSlot(
                     template_id=tpl.id, day=day, slot=slot, recipe_id=recipe.id

@@ -1,12 +1,28 @@
 {% set _day = day if day is defined else d %}
-<td class="cell {% if meal %}filled{% else %}empty{% endif %}" id="cell-{{ _day }}-{{ slot }}">
-  {% if meal %}
-    <a class="cell-recipe" href="/recipes/{{ meal.recipe.id }}/edit">{{ meal.recipe.name }}</a>
-    <button class="cell-remove"
-            hx-delete="/planner/{{ year }}/{{ week }}/{{ _day }}/{{ slot }}"
+<td class="cell {% if meals %}filled{% else %}empty{% endif %}" id="cell-{{ _day }}-{{ slot }}">
+  {% if meals %}
+    <ul class="dish-list">
+      {% for m in meals %}
+        <li class="dish">
+          <span class="dish-type type-{{ m.recipe.type }}" title="{{ type_label(m.recipe.type) }}">{{ type_label(m.recipe.type) }}</span>
+          <a class="dish-name" href="/recipes/{{ m.recipe.id }}/edit">{{ m.recipe.name }}</a>
+          <button class="dish-remove"
+                  hx-delete="/planner/{{ year }}/{{ week }}/{{ _day }}/{{ slot }}/{{ m.recipe_id }}"
+                  hx-target="#cell-{{ _day }}-{{ slot }}"
+                  hx-swap="outerHTML"
+                  title="Rimuovi">
+            <svg class="icon"><use href="#i-x"/></svg>
+          </button>
+        </li>
+      {% endfor %}
+    </ul>
+    <button class="cell-add-more"
+            hx-get="/planner/{{ year }}/{{ week }}/{{ _day }}/{{ slot }}/edit"
             hx-target="#cell-{{ _day }}-{{ slot }}"
             hx-swap="outerHTML"
-            title="Rimuovi">×</button>
+            title="Aggiungi un altro piatto">
+      <svg class="icon"><use href="#i-plus"/></svg> Aggiungi
+    </button>
   {% else %}
     <button class="cell-add"
             hx-get="/planner/{{ year }}/{{ week }}/{{ _day }}/{{ slot }}/edit"

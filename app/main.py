@@ -53,6 +53,10 @@ app.add_middleware(
 # Expose auth state to all templates so nav can conditionally render logout.
 templates.env.globals["is_auth_bypassed"] = is_auth_bypassed
 
+# Recipe-type label helper — templates can call type_label(recipe.type) directly.
+from app.i18n import RECIPE_TYPE_LABELS  # noqa: E402
+templates.env.globals["type_label"] = lambda t: RECIPE_TYPE_LABELS.get(t, t)
+
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
 app.include_router(auth.router)
@@ -69,6 +73,7 @@ def index(request: Request, session: Session = Depends(get_session)):
     today = date.today()
     y, w = current_iso_year_week()
     today_day = today.weekday()
+    from app.i18n import RECIPE_TYPE_RANK
     todays_rows = session.scalars(
         select(PlannedMeal)
         .where(
@@ -78,7 +83,13 @@ def index(request: Request, session: Session = Depends(get_session)):
         )
         .options(selectinload(PlannedMeal.recipe))
     ).all()
-    todays_meals = {m.slot: m for m in todays_rows}
+    todays_meals: dict[str, list[PlannedMeal]] = {}
+    for m in todays_rows:
+        todays_meals.setdefault(m.slot, []).append(m)
+    for slot_key in todays_meals:
+        todays_meals[slot_key].sort(
+            key=lambda m: (RECIPE_TYPE_RANK.get(m.recipe.type, 99), m.recipe.name.lower())
+        )
     recent_recipes = session.scalars(
         select(Recipe).order_by(Recipe.id.desc()).limit(6)
     ).all()

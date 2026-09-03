@@ -15,8 +15,8 @@ from app.models import (
 )
 
 
-def _add_recipe(session, name, ingredient_names):
-    r = Recipe(name=name)
+def _add_recipe(session, name, ingredient_names, type="altro"):
+    r = Recipe(name=name, type=type)
     session.add(r)
     session.flush()
     for n in ingredient_names:

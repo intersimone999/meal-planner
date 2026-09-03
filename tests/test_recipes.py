@@ -13,10 +13,13 @@ from app.models import (
 )
 
 
-def _create_recipe(client, name, notes=""):
-    r = client.post("/recipes", data={"name": name, "notes": notes}, follow_redirects=False)
-    assert r.status_code == 303
-    # /recipes/{id}/edit → extract id
+def _create_recipe(client, name, notes="", type="altro"):
+    r = client.post(
+        "/recipes",
+        data={"name": name, "type": type, "notes": notes},
+        follow_redirects=False,
+    )
+    assert r.status_code == 303, f"create failed for {name}: {r.status_code} {r.text[:200]}"
     return int(r.headers["location"].rsplit("/", 2)[-2])
 
 
@@ -31,17 +34,41 @@ def _add_ingredient(client, recipe_id, name):
 
 
 def test_recipe_create_and_delete_via_client(client, session):
-    rid = _create_recipe(client, "Pasta al pesto")
+    rid = _create_recipe(client, "Pasta al pesto", type="primo")
     assert session.query(Recipe).filter_by(name="Pasta al pesto").one().id == rid
+    assert session.query(Recipe).filter_by(id=rid).one().type == "primo"
 
     # duplicate name blocked
-    r = client.post("/recipes", data={"name": "Pasta al pesto", "notes": ""})
+    r = client.post("/recipes", data={"name": "Pasta al pesto", "type": "primo", "notes": ""})
     assert r.status_code == 400
 
     # delete
     r = client.post(f"/recipes/{rid}/delete", headers={"HX-Request": "true"})
     assert r.status_code == 200
     assert session.query(Recipe).filter_by(id=rid).first() is None
+
+
+def test_recipe_requires_valid_type(client):
+    # Missing type
+    r = client.post("/recipes", data={"name": "X", "notes": ""})
+    assert r.status_code == 400
+    assert "tipo" in r.text.lower()
+    # Bogus type
+    r = client.post("/recipes", data={"name": "X", "type": "bogus", "notes": ""})
+    assert r.status_code == 400
+    # Valid type succeeds
+    r = client.post("/recipes", data={"name": "X", "type": "primo", "notes": ""}, follow_redirects=False)
+    assert r.status_code == 303
+
+
+def test_recipe_edit_rejects_invalid_type(client, session):
+    rid = _create_recipe(client, "R", type="primo")
+    r = client.post(
+        f"/recipes/{rid}",
+        data={"name": "R", "type": "not-a-type", "notes": ""},
+        follow_redirects=False,
+    )
+    assert r.status_code == 400
 
 
 def test_ingredient_case_insensitive_dedup(client, session):

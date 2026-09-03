@@ -27,6 +27,10 @@ class Recipe(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(NoCaseString(200), unique=True)
+    # Type is required and constrained at the application layer to one of
+    # app.i18n.RECIPE_TYPES. SQLite doesn't enforce enum-style CHECK by default
+    # in every driver; the route handlers validate the incoming value.
+    type: Mapped[str] = mapped_column(String(30))
     notes: Mapped[str | None] = mapped_column(String, nullable=True)
 
     ingredients: Mapped[list["RecipeIngredient"]] = relationship(
@@ -59,7 +63,11 @@ class RecipeIngredient(Base):
 
 class PlannedMeal(Base):
     __tablename__ = "planned_meals"
-    __table_args__ = (UniqueConstraint("year", "week", "day", "slot"),)
+    # A cell (year, week, day, slot) holds many recipes; only the same recipe
+    # being added twice to the same cell is blocked.
+    __table_args__ = (
+        UniqueConstraint("year", "week", "day", "slot", "recipe_id"),
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True)
     year: Mapped[int]        # ISO year
@@ -87,7 +95,10 @@ class MealPlanTemplate(Base):
 
 class TemplateSlot(Base):
     __tablename__ = "template_slots"
-    __table_args__ = (UniqueConstraint("template_id", "day", "slot"),)
+    # Same rule as PlannedMeal: cell holds many recipes, no duplicate-per-cell.
+    __table_args__ = (
+        UniqueConstraint("template_id", "day", "slot", "recipe_id"),
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True)
     template_id: Mapped[int] = mapped_column(

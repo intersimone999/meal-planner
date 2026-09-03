@@ -8,12 +8,19 @@
     <h2>Cosa cucino oggi</h2>
     <div class="dashboard-grid">
       {% for slot in slots %}
-        {% set meal = todays_meals.get(slot) %}
+        {% set meals = todays_meals.get(slot, []) %}
         <div class="today-slot">
-          <div>
+          <div style="flex:1">
             <div class="slot-label">{{ slot_labels[slot] }}</div>
-            {% if meal %}
-              <div class="slot-recipe"><a href="/recipes/{{ meal.recipe.id }}/edit">{{ meal.recipe.name }}</a></div>
+            {% if meals %}
+              <ul class="dish-list compact">
+                {% for m in meals %}
+                  <li class="dish">
+                    <span class="dish-type type-{{ m.recipe.type }}">{{ type_label(m.recipe.type) }}</span>
+                    <a class="dish-name" href="/recipes/{{ m.recipe.id }}/edit">{{ m.recipe.name }}</a>
+                  </li>
+                {% endfor %}
+              </ul>
             {% else %}
               <div class="slot-empty">— niente in programma</div>
             {% endif %}
@@ -49,7 +56,10 @@
     {% if recent_recipes %}
       <div class="recent-recipes">
         {% for r in recent_recipes %}
-          <a href="/recipes/{{ r.id }}/edit">{{ r.name }}</a>
+          <a href="/recipes/{{ r.id }}/edit">
+            <span class="chip type-{{ r.type }}" style="margin-right:0.4rem">{{ type_label(r.type) }}</span>
+            {{ r.name }}
+          </a>
         {% endfor %}
       </div>
     {% else %}

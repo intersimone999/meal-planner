@@ -21,7 +21,9 @@ A personal, self-hosted webapp for weekly meal planning. It turns "cosa cucino q
 ### 3.1 Recipes
 
 - CRUD: create, list, view, edit, delete.
-- A recipe has: **name** (unique across all recipes), optional **notes** (free-text), and a **set of ingredients**.
+- A recipe has: **name** (unique across all recipes), **type** (required, see below), optional **notes** (free-text), and a **set of ingredients**.
+- **Type** is required and must be one of the fixed enum values: `antipasto`, `primo`, `secondo`, `contorno`, `frutta`, `dolce`, `altro`. The recipe form does not submit without a type.
+- Type is a portable label — used to sort/badge recipes and (when combined with the planner) makes multi-dish slots readable. Not used as a slot-level constraint (see §3.3).
 - **Ingredients on a recipe are just names — no quantities, no units.** Rationale: recipes must be trivial to add; friction here kills the whole app for the user.
 - The same ingredient cannot appear twice on the same recipe.
 - Deleting a recipe removes its ingredient links, cascades to any `PlannedMeal` and `TemplateSlot` rows that reference it, but never deletes `Ingredient` rows themselves.
@@ -40,8 +42,10 @@ A personal, self-hosted webapp for weekly meal planning. It turns "cosa cucino q
 
 - The plan is keyed by **ISO year + ISO week** (1–53). URLs like `/planner/2026/36`.
 - Fixed slots per day: **lunch (pranzo), dinner (cena)**. Breakfast is intentionally excluded — the user handles it separately.
-- Each `(year, week, day, slot)` cell holds **at most one recipe**. Re-assigning overwrites.
-- Actions: assign a recipe to a slot, remove a recipe from a slot.
+- Each `(year, week, day, slot)` cell can hold **zero or more recipes** (e.g. a *primo* + a *contorno* + a *frutta*). There is **no cap** and no per-type restriction — you can even plan two *primi* if that's how you actually eat.
+- The same recipe cannot be added twice to the same cell (enforced by `UNIQUE(year, week, day, slot, recipe_id)`); attempting to add a duplicate is a silent no-op.
+- Actions: add a recipe to a slot; remove a specific recipe from a slot.
+- Dishes within a cell render sorted by recipe type in the canonical order (antipasto → primo → secondo → contorno → frutta → dolce → altro), then by recipe name.
 - Navigation: previous week, next week, jump to the current week.
 - The current week (`/planner`) redirects to the ISO week containing today.
 
@@ -49,8 +53,8 @@ A personal, self-hosted webapp for weekly meal planning. It turns "cosa cucino q
 
 - Named, reusable weekly plans (e.g. "settimana standard", "settimana estiva").
 - CRUD: create, list, edit, delete templates.
-- A template has: **name** (unique across templates) and a set of `(day, slot, recipe)` entries under the same rules as §3.3 (fixed slots {lunch, dinner}, at most one recipe per cell).
-- **Apply to week:** on the planner, the user selects a template and a target week. The template populates **only empty cells** in that week — existing planned meals are preserved. Deliberately non-destructive; overwriting requires the user to first clear the slot.
+- A template has: **name** (unique across templates) and a set of `(day, slot, recipe)` entries under the same rules as §3.3 (fixed slots {lunch, dinner}, multiple recipes per cell allowed, same recipe cannot appear twice in one cell).
+- **Apply to week:** on the planner, the user selects a template and a target week. For each `(day, slot)` in the template, the template's recipes are inserted into that cell **only if the target cell is fully empty** (zero existing dishes). If the target cell has even one dish, the entire cell is skipped — no partial merging. Deliberately non-destructive.
 - Template editing UI mirrors the planner grid but is week-agnostic.
 - Deleting a recipe cascades to `TemplateSlot` rows the same way it cascades to `PlannedMeal` rows.
 
@@ -75,23 +79,25 @@ A personal, self-hosted webapp for weekly meal planning. It turns "cosa cucino q
   {
     "ingredients": ["sale", "olio d'oliva", "..."],
     "recipes": [
-      {"name": "Lasagna", "notes": "...", "ingredients": ["pasta", "manzo"]}
+      {"name": "Lasagna", "type": "primo", "notes": "...", "ingredients": ["pasta", "manzo"]}
     ],
     "templates": [
       {
         "name": "settimana standard",
         "slots": [
           {"day": 0, "slot": "lunch", "recipe": "Lasagna"},
-          {"day": 0, "slot": "dinner", "recipe": "Insalata"}
+          {"day": 0, "slot": "lunch", "recipe": "Insalata"},
+          {"day": 0, "slot": "dinner", "recipe": "Zuppa"}
         ]
       }
     ]
   }
   ```
+  Note: template slots for the same `(day, slot)` may repeat — that is how a template records multiple dishes for one cell.
 - **Excludes** the weekly plan, manual shopping items, and derived-ingredient checkboxes — those are ephemeral state, not portable content.
 - **Import** `POST /import` (multipart file upload): upserts by name, never silently overwrites.
   - **Ingredients:** create if missing.
-  - **Recipes:** skip if a recipe with that name already exists.
+  - **Recipes:** skip if a recipe with that name already exists. Recipes without a valid `type` field are counted as `invalid_rows` and their dependent template slots become orphaned.
   - **Templates:** skip if a template with that name already exists.
   - **Template slots referencing an unknown recipe:** skip that slot and count it in an `orphaned_slots` figure on the summary page. Do not fail the whole import.
 
@@ -136,11 +142,11 @@ A personal, self-hosted webapp for weekly meal planning. It turns "cosa cucino q
 ## 5. Domain model
 
 - **Ingredient**(`id`, `name` UNIQUE CI)
-- **Recipe**(`id`, `name` UNIQUE, `notes` NULLABLE)
+- **Recipe**(`id`, `name` UNIQUE, `type` NOT NULL IN {antipasto, primo, secondo, contorno, frutta, dolce, altro}, `notes` NULLABLE)
 - **RecipeIngredient**(`id`, `recipe_id` FK→Recipe, `ingredient_id` FK→Ingredient) — UNIQUE(`recipe_id`, `ingredient_id`)
-- **PlannedMeal**(`id`, `year`, `week`, `day` 0–6, `slot` IN {lunch, dinner}, `recipe_id` FK→Recipe) — UNIQUE(`year`, `week`, `day`, `slot`)
+- **PlannedMeal**(`id`, `year`, `week`, `day` 0–6, `slot` IN {lunch, dinner}, `recipe_id` FK→Recipe) — UNIQUE(`year`, `week`, `day`, `slot`, `recipe_id`) — a cell can hold multiple recipes; only duplicates of the same recipe in the same cell are blocked.
 - **MealPlanTemplate**(`id`, `name` UNIQUE CI)
-- **TemplateSlot**(`id`, `template_id` FK→MealPlanTemplate, `day` 0–6, `slot` IN {lunch, dinner}, `recipe_id` FK→Recipe) — UNIQUE(`template_id`, `day`, `slot`)
+- **TemplateSlot**(`id`, `template_id` FK→MealPlanTemplate, `day` 0–6, `slot` IN {lunch, dinner}, `recipe_id` FK→Recipe) — UNIQUE(`template_id`, `day`, `slot`, `recipe_id`) — same reasoning as `PlannedMeal`.
 - **ManualShoppingItem**(`id`, `name`, `checked` BOOL, `created_at`)
 - **ShoppingCheck**(`id`, `year`, `week`, `ingredient_id` FK→Ingredient) — UNIQUE(`year`, `week`, `ingredient_id`). Presence of a row means the corresponding derived ingredient is checked for that week. Auto-scoped: viewing a different week shows a different set of checks.
 
@@ -154,14 +160,16 @@ Explicit non-goals — do **not** add these without updating the spec first:
 - Servings / portion scaling.
 - Multi-user, accounts, roles.
 - Nutritional information.
-- Recipe search, tagging, cuisines, ratings, favorites.
+- Recipe search, tagging, cuisines beyond the fixed type enum, ratings, favorites.
+- User-editable recipe type list (the type enum is hardcoded).
+- Per-type slot caps in the planner (a cell can hold multiple dishes of the same type).
 - Grocery-store integrations.
 - Native or PWA mobile app.
 - Migration tooling.
 - Undo / soft-delete.
 - Language switcher / multilingual UI (Italian is hardcoded).
 - Breakfast slot (user manages breakfast on their own).
-- Overwriting existing planned meals when applying a template (fill-empty-only is the contract).
+- Overwriting existing planned meals when applying a template (fill-empty-only, at the cell level, is the contract).
 
 ## 7. Acceptance criteria
 
@@ -170,4 +178,5 @@ Explicit non-goals — do **not** add these without updating the spec first:
 3. **Container persistence:** `docker run` with a mounted `/data` volume; create a recipe; restart the container; recipe is still there.
 4. **Login:** with `MENUAPP_USER`/`MENUAPP_PASSWORD` set, visiting any protected page redirects to `/login`; correct credentials log you in and return you to the original page; `/healthz` is reachable without login; session survives a browser restart within 30 days.
 5. **Import/export round-trip:** export → wipe DB → import via the `/import` upload page → recipes, ingredients, and templates are identical (order-insensitive). Importing a template whose recipes are missing succeeds and reports the orphaned slots on the summary.
-6. **Template apply:** create a template with recipes on Mon lunch and Wed dinner → on a week with an existing meal on Mon lunch, apply the template → Mon lunch is unchanged; Wed dinner is populated from the template.
+6. **Template apply:** create a template with `[primo + contorno]` on Mon lunch and one recipe on Wed dinner → on a week with an existing meal on Mon lunch, apply the template → Mon lunch is unchanged (both template dishes skipped, not just the primo); Wed dinner is populated from the template.
+7. **Multi-dish slot:** in a single planner cell, add a primo, a contorno, and a frutta → all three render sorted by type. The same recipe cannot be added twice; attempting to do so is a silent no-op.

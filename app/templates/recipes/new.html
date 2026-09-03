@@ -14,6 +14,15 @@
         <input id="name" type="text" name="name" value="{{ name or '' }}" required autofocus maxlength="200" placeholder="es. Pasta al pesto">
       </div>
       <div>
+        <label for="type">Tipo</label>
+        <select id="type" name="type" required>
+          <option value="" {% if not type %}selected{% endif %} disabled>— scegli —</option>
+          {% for t in types %}
+            <option value="{{ t }}" {% if type == t %}selected{% endif %}>{{ type_labels[t] }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
         <label for="notes">Note <span class="hint">(opzionale)</span></label>
         <textarea id="notes" name="notes" rows="4">{{ notes or '' }}</textarea>
       </div>

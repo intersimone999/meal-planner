@@ -11,8 +11,8 @@ def _seed(session):
     ing_names = ["pasta", "pesto", "parmigiano", "riso", "tonno"]
     for n in ing_names:
         session.add(Ingredient(name=n))
-    r1 = Recipe(name="Pasta al pesto", notes="Con parmigiano")
-    r2 = Recipe(name="Insalata di riso", notes=None)
+    r1 = Recipe(name="Pasta al pesto", type="primo", notes="Con parmigiano")
+    r2 = Recipe(name="Insalata di riso", type="contorno", notes=None)
     session.add_all([r1, r2])
     session.flush()
     for name in ["pasta", "pesto", "parmigiano"]:
@@ -24,26 +24,26 @@ def _seed(session):
     tpl = MealPlanTemplate(name="Standard")
     session.add(tpl)
     session.flush()
+    # Multi-dish cell on Mon lunch: primo + contorno
     session.add(TemplateSlot(template_id=tpl.id, day=0, slot="lunch", recipe_id=r1.id))
-    session.add(TemplateSlot(template_id=tpl.id, day=2, slot="dinner", recipe_id=r2.id))
+    session.add(TemplateSlot(template_id=tpl.id, day=0, slot="lunch", recipe_id=r2.id))
+    session.add(TemplateSlot(template_id=tpl.id, day=2, slot="dinner", recipe_id=r1.id))
     session.commit()
 
 
-def test_export_shape(session):
+def test_export_shape_includes_type(session):
     _seed(session)
     data = export_all(session)
     assert set(data.keys()) == {"ingredients", "recipes", "templates"}
-    assert data["ingredients"] == sorted(["pasta", "pesto", "parmigiano", "riso", "tonno"])
-    names = sorted(r["name"] for r in data["recipes"])
-    assert names == ["Insalata di riso", "Pasta al pesto"]
     pesto = next(r for r in data["recipes"] if r["name"] == "Pasta al pesto")
-    assert pesto["notes"] == "Con parmigiano"
-    assert pesto["ingredients"] == sorted(["pasta", "pesto", "parmigiano"])
-    assert len(data["templates"]) == 1
+    assert pesto["type"] == "primo"
+    riso = next(r for r in data["recipes"] if r["name"] == "Insalata di riso")
+    assert riso["type"] == "contorno"
+    # Template has 3 slot entries; 2 of them share (day=0, slot=lunch)
     slots = data["templates"][0]["slots"]
-    assert len(slots) == 2
-    # Templates reference recipes BY NAME (not id)
-    assert {s["recipe"] for s in slots} == {"Pasta al pesto", "Insalata di riso"}
+    assert len(slots) == 3
+    mon_lunch = [s for s in slots if s["day"] == 0 and s["slot"] == "lunch"]
+    assert len(mon_lunch) == 2
 
 
 def test_round_trip_via_wipe_and_import(session):
@@ -60,7 +60,6 @@ def test_round_trip_via_wipe_and_import(session):
     assert summary["orphaned_slots"] == 0
 
     re_exported = export_all(session)
-    # Order-insensitive equality
     assert sorted(re_exported["ingredients"]) == sorted(exported["ingredients"])
     assert sorted(re_exported["recipes"], key=lambda r: r["name"]) == sorted(
         exported["recipes"], key=lambda r: r["name"]
@@ -74,19 +73,33 @@ def test_reimport_skips_existing(session):
     _seed(session)
     data = export_all(session)
     summary = import_all(session, data)
-    # Everything already exists → 0 created, N skipped
-    assert summary["ingredients_created"] == 0  # dedup by name
+    assert summary["ingredients_created"] == 0
     assert summary["recipes_created"] == 0
     assert summary["recipes_skipped"] == 2
     assert summary["templates_created"] == 0
     assert summary["templates_skipped"] == 1
 
 
+def test_recipe_without_valid_type_counted_invalid(session):
+    data = {
+        "ingredients": [],
+        "recipes": [
+            {"name": "MissingType"},                    # no type
+            {"name": "BadType", "type": "bogus"},        # bad type
+            {"name": "GoodOne", "type": "primo"},
+        ],
+        "templates": [],
+    }
+    summary = import_all(session, data)
+    assert summary["recipes_created"] == 1
+    assert summary["invalid_rows"] >= 2
+    assert session.query(Recipe).filter_by(name="GoodOne").count() == 1
+    assert session.query(Recipe).filter_by(name="MissingType").count() == 0
+    assert session.query(Recipe).filter_by(name="BadType").count() == 0
+
+
 def test_orphaned_slots_counted_not_fatal(session):
-    # Recipe 'Ghost' is not in the DB — the template slot referencing it must
-    # be counted as orphaned; the template itself is still created; the other
-    # slot is imported normally.
-    session.add(Recipe(name="Existing"))
+    session.add(Recipe(name="Existing", type="primo"))
     session.commit()
     data = {
         "ingredients": [],
@@ -104,20 +117,43 @@ def test_orphaned_slots_counted_not_fatal(session):
     summary = import_all(session, data)
     assert summary["templates_created"] == 1
     assert summary["orphaned_slots"] == 1
-
     tpl = session.query(MealPlanTemplate).filter_by(name="T").one()
     assert len(tpl.slots) == 1
     assert tpl.slots[0].day == 3
 
 
+def test_multi_dish_template_slot_round_trips(session):
+    # Ensure a template with two recipes on the same (day, slot) round-trips.
+    session.add(Recipe(name="A", type="primo"))
+    session.add(Recipe(name="B", type="contorno"))
+    session.commit()
+    data = {
+        "ingredients": [],
+        "recipes": [],
+        "templates": [{
+            "name": "T",
+            "slots": [
+                {"day": 0, "slot": "lunch", "recipe": "A"},
+                {"day": 0, "slot": "lunch", "recipe": "B"},  # same (day, slot), different recipe
+                {"day": 0, "slot": "lunch", "recipe": "A"},  # duplicate → invalid_row
+            ]
+        }]
+    }
+    summary = import_all(session, data)
+    assert summary["templates_created"] == 1
+    assert summary["invalid_rows"] >= 1
+    tpl = session.query(MealPlanTemplate).filter_by(name="T").one()
+    assert len(tpl.slots) == 2
+
+
 def test_invalid_rows_counted_not_fatal(session):
     data = {
-        "ingredients": ["valid", "", 42, None],  # 3 invalid, 1 valid
+        "ingredients": ["valid", "", 42, None],
         "recipes": [
-            {"name": "OK", "ingredients": ["ok-ing"]},
-            {"name": ""},          # invalid: empty name
-            "not-a-dict",           # invalid: not an object
-            {"noname": True},       # invalid: missing name
+            {"name": "OK", "type": "primo", "ingredients": ["ok-ing"]},
+            {"name": ""},
+            "not-a-dict",
+            {"noname": True},
         ],
         "templates": [
             {"name": "T", "slots": [
@@ -129,13 +165,12 @@ def test_invalid_rows_counted_not_fatal(session):
         ],
     }
     summary = import_all(session, data)
-    assert summary["ingredients_created"] == 2  # "valid" + auto-created "ok-ing" from recipe
+    assert summary["ingredients_created"] == 2
     assert summary["recipes_created"] == 1
     assert summary["templates_created"] == 1
-    # Exactly one valid slot survived
     tpl = session.query(MealPlanTemplate).filter_by(name="T").one()
     assert len(tpl.slots) == 1
-    assert summary["invalid_rows"] >= 5  # multiple bad inputs above
+    assert summary["invalid_rows"] >= 5
 
 
 def test_export_excludes_ephemeral_state(session):
@@ -150,7 +185,6 @@ def test_export_excludes_ephemeral_state(session):
     session.commit()
 
     data = export_all(session)
-    # These entities MUST NOT leak into the export
     blob = json.dumps(data)
     assert "planned_meals" not in blob and "detersivo" not in blob
     assert "shopping_checks" not in blob

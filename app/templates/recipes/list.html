@@ -13,16 +13,17 @@
   {% if recipes %}
     <table>
       <thead>
-        <tr><th>Nome</th><th>Ingredienti</th><th style="width:12rem">Azioni</th></tr>
+        <tr><th>Nome</th><th>Tipo</th><th>Ingredienti</th><th style="width:8rem">Azioni</th></tr>
       </thead>
       <tbody>
         {% for r in recipes %}
           <tr>
             <td><a href="/recipes/{{ r.id }}/edit">{{ r.name }}</a></td>
+            <td><span class="chip type-{{ r.type }}">{{ type_label(r.type) }}</span></td>
             <td>
               {% if r.ingredients %}
                 <div class="chips" style="min-height:auto;margin:0">
-                  {% for link in r.ingredients %}<span class="chip">{{ link.ingredient.name }}</span>{% endfor %}
+                  {% for link in r.ingredients %}<span class="chip plain">{{ link.ingredient.name }}</span>{% endfor %}
                 </div>
               {% else %}
                 <em>nessuno</em>
@@ -30,11 +31,12 @@
             </td>
             <td>
               <a class="button" href="/recipes/{{ r.id }}/edit">Modifica</a>
-              <button class="button danger"
+              <button class="button danger icon-only"
                       hx-post="/recipes/{{ r.id }}/delete"
                       hx-confirm="Eliminare la ricetta «{{ r.name }}»?"
                       hx-target="closest tr"
-                      hx-swap="outerHTML">
+                      hx-swap="outerHTML"
+                      title="Elimina">
                 <svg class="icon"><use href="#i-x"/></svg>
               </button>
             </td>

@@ -4,7 +4,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session, selectinload
 
 from app.deps import get_session, templates
-from app.i18n import DAY_NAMES_SHORT, SLOT_LABELS, SLOTS
+from app.i18n import DAY_NAMES_SHORT, RECIPE_TYPE_RANK, SLOT_LABELS, SLOTS
 from app.models import MealPlanTemplate, Recipe, TemplateSlot
 
 router = APIRouter(prefix="/mealplans", tags=["mealplans"])
@@ -28,8 +28,8 @@ def _load_template(session: Session, template_id: int) -> MealPlanTemplate:
     return tpl
 
 
-def _load_slot(session: Session, template_id: int, day: int, slot: str) -> TemplateSlot | None:
-    return session.scalar(
+def _load_cell_entries(session: Session, template_id: int, day: int, slot: str) -> list[TemplateSlot]:
+    rows = session.scalars(
         select(TemplateSlot)
         .where(
             TemplateSlot.template_id == template_id,
@@ -37,14 +37,18 @@ def _load_slot(session: Session, template_id: int, day: int, slot: str) -> Templ
             TemplateSlot.slot == slot,
         )
         .options(selectinload(TemplateSlot.recipe))
+    ).all()
+    return sorted(
+        rows,
+        key=lambda e: (RECIPE_TYPE_RANK.get(e.recipe.type, 99), e.recipe.name.lower()),
     )
 
 
-def _cell_response(request: Request, template_id: int, day: int, slot: str, entry: TemplateSlot | None):
+def _cell_response(request: Request, template_id: int, day: int, slot: str, entries: list[TemplateSlot]):
     return templates.TemplateResponse(
         request,
         "mealplans/_cell.html",
-        {"template_id": template_id, "day": day, "slot": slot, "entry": entry},
+        {"template_id": template_id, "day": day, "slot": slot, "entries": entries},
     )
 
 
@@ -105,7 +109,13 @@ def edit_template_form(
     session: Session = Depends(get_session),
 ):
     tpl = _load_template(session, template_id)
-    grid = {(s.day, s.slot): s for s in tpl.slots}
+    grid: dict[tuple[int, str], list[TemplateSlot]] = {}
+    for s in tpl.slots:
+        grid.setdefault((s.day, s.slot), []).append(s)
+    for key in grid:
+        grid[key].sort(
+            key=lambda s: (RECIPE_TYPE_RANK.get(s.recipe.type, 99), s.recipe.name.lower())
+        )
     return templates.TemplateResponse(
         request,
         "mealplans/edit.html",
@@ -167,46 +177,42 @@ def delete_template(
 
 @router.get("/{template_id}/cell/{day}/{slot}", response_class=HTMLResponse)
 def render_cell(
-    template_id: int,
-    day: int,
-    slot: str,
+    template_id: int, day: int, slot: str,
     request: Request,
     session: Session = Depends(get_session),
 ):
     _validate(day, slot)
-    entry = _load_slot(session, template_id, day, slot)
-    return _cell_response(request, template_id, day, slot, entry)
+    entries = _load_cell_entries(session, template_id, day, slot)
+    return _cell_response(request, template_id, day, slot, entries)
 
 
 @router.get("/{template_id}/cell/{day}/{slot}/edit", response_class=HTMLResponse)
 def edit_cell(
-    template_id: int,
-    day: int,
-    slot: str,
+    template_id: int, day: int, slot: str,
     request: Request,
     session: Session = Depends(get_session),
 ):
     _validate(day, slot)
-    entry = _load_slot(session, template_id, day, slot)
-    recipes = session.scalars(select(Recipe).order_by(Recipe.name)).all()
+    entries = _load_cell_entries(session, template_id, day, slot)
+    already = {e.recipe_id for e in entries}
+    recipes = [
+        r for r in session.scalars(select(Recipe).order_by(Recipe.name)).all()
+        if r.id not in already
+    ]
     return templates.TemplateResponse(
         request,
         "mealplans/_edit_cell.html",
         {
-            "template_id": template_id,
-            "day": day,
-            "slot": slot,
-            "entry": entry,
+            "template_id": template_id, "day": day, "slot": slot,
+            "entries": entries,
             "recipes": recipes,
         },
     )
 
 
 @router.post("/{template_id}/cell/{day}/{slot}", response_class=HTMLResponse)
-def assign_cell(
-    template_id: int,
-    day: int,
-    slot: str,
+def add_to_cell(
+    template_id: int, day: int, slot: str,
     request: Request,
     recipe_id: str = Form(""),
     session: Session = Depends(get_session),
@@ -215,38 +221,45 @@ def assign_cell(
     tpl = session.get(MealPlanTemplate, template_id)
     if not tpl:
         raise HTTPException(status_code=404, detail="Modello non trovato")
-    existing = _load_slot(session, template_id, day, slot)
     if not recipe_id:
-        if existing:
-            session.delete(existing)
-            session.commit()
-        return _cell_response(request, template_id, day, slot, None)
+        entries = _load_cell_entries(session, template_id, day, slot)
+        return _cell_response(request, template_id, day, slot, entries)
     try:
         rid = int(recipe_id)
     except ValueError:
         raise HTTPException(status_code=400, detail="ID ricetta non valido")
     if not session.get(Recipe, rid):
         raise HTTPException(status_code=404, detail="Ricetta non trovata")
-    if existing:
-        existing.recipe_id = rid
-    else:
+    existing = session.scalar(
+        select(TemplateSlot).where(
+            TemplateSlot.template_id == template_id,
+            TemplateSlot.day == day, TemplateSlot.slot == slot,
+            TemplateSlot.recipe_id == rid,
+        )
+    )
+    if not existing:
         session.add(TemplateSlot(template_id=template_id, day=day, slot=slot, recipe_id=rid))
-    session.commit()
-    entry = _load_slot(session, template_id, day, slot)
-    return _cell_response(request, template_id, day, slot, entry)
+        session.commit()
+    entries = _load_cell_entries(session, template_id, day, slot)
+    return _cell_response(request, template_id, day, slot, entries)
 
 
-@router.delete("/{template_id}/cell/{day}/{slot}", response_class=HTMLResponse)
-def remove_cell(
-    template_id: int,
-    day: int,
-    slot: str,
+@router.delete("/{template_id}/cell/{day}/{slot}/{recipe_id}", response_class=HTMLResponse)
+def remove_from_cell(
+    template_id: int, day: int, slot: str, recipe_id: int,
     request: Request,
     session: Session = Depends(get_session),
 ):
     _validate(day, slot)
-    existing = _load_slot(session, template_id, day, slot)
+    existing = session.scalar(
+        select(TemplateSlot).where(
+            TemplateSlot.template_id == template_id,
+            TemplateSlot.day == day, TemplateSlot.slot == slot,
+            TemplateSlot.recipe_id == recipe_id,
+        )
+    )
     if existing:
         session.delete(existing)
         session.commit()
-    return _cell_response(request, template_id, day, slot, None)
+    entries = _load_cell_entries(session, template_id, day, slot)
+    return _cell_response(request, template_id, day, slot, entries)

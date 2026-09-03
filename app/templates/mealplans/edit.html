@@ -36,7 +36,7 @@
         <tr>
           <th class="day-col"><span class="day-name">{{ day_names[d] }}</span></th>
           {% for slot in slots %}
-            {% set entry = grid.get((d, slot)) %}
+            {% set entries = grid.get((d, slot), []) %}
             {% set day = d %}
             {% set template_id = template.id %}
             {% include "mealplans/_cell.html" with context %}

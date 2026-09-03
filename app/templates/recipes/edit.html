@@ -17,6 +17,14 @@
         <input id="name" type="text" name="name" value="{{ recipe.name }}" required maxlength="200">
       </div>
       <div>
+        <label for="type">Tipo</label>
+        <select id="type" name="type" required>
+          {% for t in types %}
+            <option value="{{ t }}" {% if recipe.type == t %}selected{% endif %}>{{ type_labels[t] }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
         <label for="notes">Note <span class="hint">(opzionale)</span></label>
         <textarea id="notes" name="notes" rows="4">{{ recipe.notes or '' }}</textarea>
       </div>

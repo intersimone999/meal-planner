@@ -22,9 +22,9 @@ v1 feature-complete against `SPEC.md`. All six phases (recipes+ingredients CRUD,
 
 Self-hosted webapp for personal meal planning. Core capabilities:
 
-1. **Recipe library** — name + optional notes + a **set of ingredient names**. No quantities, no units.
-2. **Weekly planner** — recipes assigned to fixed slots **{lunch, dinner}** on an ISO year+week grid (no breakfast — user handles that separately).
-3. **Reusable weekly templates** — named plans (e.g. "settimana standard") that can be applied to a specific week; applying **only fills empty cells**, never overwrites.
+1. **Recipe library** — name + **required type** (fixed enum: antipasto/primo/secondo/contorno/frutta/dolce/altro) + optional notes + a **set of ingredient names**. No quantities, no units.
+2. **Weekly planner** — recipes assigned to fixed slots **{lunch, dinner}** on an ISO year+week grid (no breakfast). Each cell can hold **multiple recipes** — natural for the Italian multi-course meal. The same recipe cannot appear twice in one cell.
+3. **Reusable weekly templates** — named plans that can be applied to a specific week; applying **only fills fully empty cells** (no partial merge), never overwrites.
 4. **Shopping list** — two independent sections shown together:
    - **Derived** from the plan, each item with a checkbox scoped to `(year, week)`. New week ⇒ fresh empty check state (auto-reset by design).
    - **Manual** pantry list, persistent, independent of any week.
@@ -61,10 +61,10 @@ Docker:
 ### Domain model (see SPEC.md §5 for canonical definitions)
 
 - `Ingredient` — canonical, deduplicated by name (case-insensitive).
-- `Recipe` — name + optional notes.
+- `Recipe` — name + **required type (fixed enum)** + optional notes. See `RECIPE_TYPES` / `RECIPE_TYPE_LABELS` in `app/i18n.py`.
 - `RecipeIngredient` — join table (recipe_id, ingredient_id). No quantity, no unit. Unique per (recipe, ingredient).
-- `PlannedMeal` — (year, week, day, slot, recipe). Unique per (year, week, day, slot). Slot ∈ {lunch, dinner}.
-- `MealPlanTemplate` + `TemplateSlot` — same shape as `PlannedMeal` but without (year, week). Templates get "applied" to a week, filling empty slots only.
+- `PlannedMeal` — (year, week, day, slot, recipe). Unique per (year, week, day, slot, **recipe_id**) — one cell holds many recipes, only same-recipe duplication is blocked.
+- `MealPlanTemplate` + `TemplateSlot` — same shape as `PlannedMeal` but without (year, week). Templates get "applied" to a week and fill only **fully empty** cells (skip cell if any dish is already there).
 - `ManualShoppingItem` — persistent pantry item (name, checked flag). Not tied to any week.
 - `ShoppingCheck` — (year, week, ingredient_id). Presence of a row = that derived ingredient is checked for that week. Per-week scoping is what gives the "auto-reset on new week" behavior for free.
 
@@ -99,4 +99,4 @@ Both rendered in `shopping/index.html` as two distinct sections. Toggling a deri
 
 ### Template application (reference)
 
-`POST /templates/{id}/apply` with form field `week` (`YYYY-Www` or `year=&week=`) → for each `TemplateSlot`, `INSERT ... ON CONFLICT DO NOTHING` into `planned_meals(year, week, day, slot, recipe_id)`. The unique constraint on `(year, week, day, slot)` gives fill-empty-only semantics for free. Never `INSERT OR REPLACE` here.
+`POST /planner/{year}/{week}/apply` with form field `template_id` → group the template's slots by `(day, slot)`; for each group, check whether the target week already has ANY `PlannedMeal` for that `(day, slot)`. If empty, insert all the template's recipes for that cell. If non-empty, skip the whole cell (no partial merge — see SPEC.md §3.4). Never `INSERT OR REPLACE`.

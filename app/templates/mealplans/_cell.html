@@ -1,11 +1,27 @@
-<td class="cell {% if entry %}filled{% else %}empty{% endif %}" id="tcell-{{ day }}-{{ slot }}">
-  {% if entry %}
-    <a class="cell-recipe" href="/recipes/{{ entry.recipe.id }}/edit">{{ entry.recipe.name }}</a>
-    <button class="cell-remove"
-            hx-delete="/mealplans/{{ template_id }}/cell/{{ day }}/{{ slot }}"
+<td class="cell {% if entries %}filled{% else %}empty{% endif %}" id="tcell-{{ day }}-{{ slot }}">
+  {% if entries %}
+    <ul class="dish-list">
+      {% for e in entries %}
+        <li class="dish">
+          <span class="dish-type type-{{ e.recipe.type }}" title="{{ type_label(e.recipe.type) }}">{{ type_label(e.recipe.type) }}</span>
+          <a class="dish-name" href="/recipes/{{ e.recipe.id }}/edit">{{ e.recipe.name }}</a>
+          <button class="dish-remove"
+                  hx-delete="/mealplans/{{ template_id }}/cell/{{ day }}/{{ slot }}/{{ e.recipe_id }}"
+                  hx-target="#tcell-{{ day }}-{{ slot }}"
+                  hx-swap="outerHTML"
+                  title="Rimuovi">
+            <svg class="icon"><use href="#i-x"/></svg>
+          </button>
+        </li>
+      {% endfor %}
+    </ul>
+    <button class="cell-add-more"
+            hx-get="/mealplans/{{ template_id }}/cell/{{ day }}/{{ slot }}/edit"
             hx-target="#tcell-{{ day }}-{{ slot }}"
             hx-swap="outerHTML"
-            title="Rimuovi">×</button>
+            title="Aggiungi un altro piatto">
+      <svg class="icon"><use href="#i-plus"/></svg> Aggiungi
+    </button>
   {% else %}
     <button class="cell-add"
             hx-get="/mealplans/{{ template_id }}/cell/{{ day }}/{{ slot }}/edit"
