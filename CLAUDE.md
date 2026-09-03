@@ -10,7 +10,7 @@ CLAUDE.md (this file) is guidance for *how* to work in the repo; SPEC.md is the 
 
 ## Status
 
-Greenfield repository — project scaffolding (venv, `requirements.txt`, `Dockerfile`, `.gitignore`) and a stub FastAPI skeleton with placeholder routes are in place. Feature implementation has not begun. The sections below describe the **intended** architecture aligned with `SPEC.md`. Update this file as reality diverges from the plan.
+v1 feature-complete against `SPEC.md`. All six phases (recipes+ingredients CRUD, planner, shopping, templates, login+import/export, merge+tests+docker) landed. Test suite: `pytest -q` runs 25 tests, all green. Docker acceptance cycle (build → run with mounted volume + auth env → login → create recipe → restart → verify persistence) verified against `docker run` on port 18000. The sections below describe the actual architecture as built.
 
 ## Working conventions for this repo
 
