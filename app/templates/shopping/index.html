@@ -1,16 +1,17 @@
 {% extends "base.html" %}
 {% block title %}Spesa — settimana {{ week }}/{{ year }}{% endblock %}
 {% block content %}
-  <div class="planner-header">
-    <a class="button" href="/shopping/{{ prev_year }}/{{ prev_week }}" title="Settimana precedente">‹ Precedente</a>
+  <div class="week-header">
+    <a class="button" href="/shopping/{{ prev_year }}/{{ prev_week }}" title="Settimana precedente">‹</a>
     <h1>Spesa · settimana {{ week }} · {{ date_range }} {{ year }}</h1>
     <a class="button" href="/shopping" title="Vai a questa settimana">Oggi</a>
-    <a class="button" href="/shopping/{{ next_year }}/{{ next_week }}" title="Settimana successiva">Successiva ›</a>
+    <a class="button" href="/shopping/{{ next_year }}/{{ next_week }}" title="Settimana successiva">›</a>
   </div>
 
-  <div class="shopping">
-    <section class="derived">
-      <h2>Dal piano settimanale</h2>
+  <div class="shopping-grid">
+
+    <section class="card shopping-section derived">
+      <h2>Dal piano <span class="section-badge">auto</span></h2>
       <p class="hint">Ingredienti delle ricette pianificate. Le spunte si azzerano ogni settimana.</p>
       {% if derived %}
         <ul id="derived-list" class="item-list">
@@ -19,22 +20,30 @@
           {% endfor %}
         </ul>
       {% else %}
-        <p><em>Nessuna ricetta pianificata per questa settimana.</em></p>
+        <div class="empty-state">
+          <svg class="icon-lg"><use href="#i-calendar"/></svg>
+          <p>Nessuna ricetta pianificata per questa settimana.</p>
+          <a class="button" href="/planner/{{ year }}/{{ week }}">
+            <svg class="icon"><use href="#i-arrow-right"/></svg> Vai al piano
+          </a>
+        </div>
       {% endif %}
     </section>
 
-    <section class="manual">
-      <h2>Voci manuali</h2>
+    <section class="card shopping-section manual">
+      <h2>Voci manuali <span class="section-badge">tu</span></h2>
       <p class="hint">Elementi ricorrenti (dispensa, detersivi…). Non si azzerano da soli.</p>
 
       <form hx-post="/shopping/manual"
             hx-target="#manual-list"
             hx-swap="beforeend"
             hx-on::after-request="this.reset(); this.querySelector('input').focus();"
-            class="add-manual">
+            class="add-row">
         <input type="text" name="name" required maxlength="200"
                placeholder="Aggiungi una voce e premi Invio" autocomplete="off">
-        <button type="submit" class="button">Aggiungi</button>
+        <button type="submit" class="button">
+          <svg class="icon"><use href="#i-plus"/></svg>
+        </button>
       </form>
 
       <ul id="manual-list" class="item-list">
@@ -43,5 +52,6 @@
         {% endfor %}
       </ul>
     </section>
+
   </div>
 {% endblock %}

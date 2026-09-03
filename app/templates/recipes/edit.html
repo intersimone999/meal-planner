@@ -1,31 +1,32 @@
 {% extends "base.html" %}
 {% block title %}{{ recipe.name }} — menuapp{% endblock %}
 {% block content %}
-  <h1>Modifica ricetta</h1>
-
-  {% if error %}<p class="error">{{ error }}</p>{% endif %}
-
-  <form method="post" action="/recipes/{{ recipe.id }}" class="recipe-form">
-    <label>
-      Nome
-      <input type="text" name="name" value="{{ recipe.name }}" required maxlength="200">
-    </label>
-    <label>
-      Note <span class="hint">(opzionale)</span>
-      <textarea name="notes" rows="4">{{ recipe.notes or '' }}</textarea>
-    </label>
+  <div class="page-header">
+    <h1>{{ recipe.name }}</h1>
     <div class="actions">
-      <button type="submit" class="button primary">Salva modifiche</button>
-      <a class="button" href="/recipes">Torna alle ricette</a>
+      <a class="button" href="/recipes">‹ Tutte le ricette</a>
     </div>
-  </form>
+  </div>
 
-  <form method="post" action="/recipes/{{ recipe.id }}/delete" class="delete-form"
-        onsubmit="return confirm('Eliminare la ricetta «{{ recipe.name }}»?');">
-    <button type="submit" class="button danger">Elimina ricetta</button>
-  </form>
+  {% if error %}<div class="error">{{ error }}</div>{% endif %}
 
-  <section class="ingredients-section">
+  <div class="card">
+    <form method="post" action="/recipes/{{ recipe.id }}" class="form-stack">
+      <div>
+        <label for="name">Nome</label>
+        <input id="name" type="text" name="name" value="{{ recipe.name }}" required maxlength="200">
+      </div>
+      <div>
+        <label for="notes">Note <span class="hint">(opzionale)</span></label>
+        <textarea id="notes" name="notes" rows="4">{{ recipe.notes or '' }}</textarea>
+      </div>
+      <div class="form-actions">
+        <button type="submit" class="button primary">Salva modifiche</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="card">
     <h2>Ingredienti</h2>
 
     <div id="chips" class="chips">
@@ -38,11 +39,13 @@
           hx-target="#chips"
           hx-swap="beforeend"
           hx-on::after-request="this.reset(); this.querySelector('input').focus();"
-          class="add-ingredient">
+          class="add-row">
       <input type="text" name="name" list="ingredient-options"
              placeholder="Aggiungi ingrediente e premi Invio"
              autocomplete="off" required maxlength="120">
-      <button type="submit" class="button">Aggiungi</button>
+      <button type="submit" class="button">
+        <svg class="icon"><use href="#i-plus"/></svg> Aggiungi
+      </button>
     </form>
 
     <datalist id="ingredient-options">
@@ -50,5 +53,16 @@
         <option value="{{ i.name }}">
       {% endfor %}
     </datalist>
-  </section>
+  </div>
+
+  <div class="card">
+    <h2>Zona pericolosa</h2>
+    <p class="hint">Eliminare la ricetta cancella anche i suoi ingredienti collegati, gli slot del piano e degli eventuali modelli.</p>
+    <form method="post" action="/recipes/{{ recipe.id }}/delete"
+          onsubmit="return confirm('Eliminare la ricetta «{{ recipe.name }}»?');">
+      <button type="submit" class="button danger">
+        <svg class="icon"><use href="#i-x"/></svg> Elimina ricetta
+      </button>
+    </form>
+  </div>
 {% endblock %}

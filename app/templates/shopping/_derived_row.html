@@ -1,11 +1,10 @@
-{# Derived-shopping-list row. Requires: year, week, ing, checked. #}
 <li id="derived-{{ ing.id }}" class="{% if checked %}checked{% endif %}">
   <button class="check-btn"
           hx-post="/shopping/{{ year }}/{{ week }}/toggle/{{ ing.id }}"
           hx-target="#derived-{{ ing.id }}"
           hx-swap="outerHTML"
           title="{% if checked %}Segna come da comprare{% else %}Segna come preso{% endif %}">
-    {% if checked %}✓{% else %}○{% endif %}
+    <svg class="icon"><use href="#i-check"/></svg>
   </button>
   <span class="name">{{ ing.name }}</span>
 </li>

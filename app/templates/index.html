@@ -1,13 +1,65 @@
 {% extends "base.html" %}
 {% block content %}
-  <h1>menuapp</h1>
-  <p>Pianifica i pasti della settimana e genera la lista della spesa.</p>
-  <ul>
-    <li><a href="/recipes">Gestisci le ricette</a></li>
-    <li><a href="/ingredients">Gestisci gli ingredienti</a></li>
-    <li><a href="/planner">Pianifica la settimana</a></li>
-    <li><a href="/mealplans">Modelli di settimana</a></li>
-    <li><a href="/shopping">Lista della spesa</a></li>
-    <li><a href="/import">Import / Export</a></li>
-  </ul>
+  <div class="page-header">
+    <h1>Buongiorno · {{ today_dayname }}, {{ today_date }}</h1>
+  </div>
+
+  <section class="card">
+    <h2>Cosa cucino oggi</h2>
+    <div class="dashboard-grid">
+      {% for slot in slots %}
+        {% set meal = todays_meals.get(slot) %}
+        <div class="today-slot">
+          <div>
+            <div class="slot-label">{{ slot_labels[slot] }}</div>
+            {% if meal %}
+              <div class="slot-recipe"><a href="/recipes/{{ meal.recipe.id }}/edit">{{ meal.recipe.name }}</a></div>
+            {% else %}
+              <div class="slot-empty">— niente in programma</div>
+            {% endif %}
+          </div>
+          <a class="button ghost" href="/planner/{{ year }}/{{ week }}" title="Vai al piano">
+            <svg class="icon"><use href="#i-arrow-right"/></svg>
+          </a>
+        </div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Azioni rapide</h2>
+    <div class="quick-actions">
+      <a class="button primary" href="/recipes/new">
+        <svg class="icon"><use href="#i-plus"/></svg> Nuova ricetta
+      </a>
+      <a class="button" href="/planner">
+        <svg class="icon"><use href="#i-calendar"/></svg> Pianifica la settimana
+      </a>
+      <a class="button" href="/shopping">
+        <svg class="icon"><use href="#i-cart"/></svg> Lista della spesa
+      </a>
+      <a class="button" href="/mealplans">
+        <svg class="icon"><use href="#i-layout"/></svg> Modelli di settimana
+      </a>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Ricette recenti</h2>
+    {% if recent_recipes %}
+      <div class="recent-recipes">
+        {% for r in recent_recipes %}
+          <a href="/recipes/{{ r.id }}/edit">{{ r.name }}</a>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="empty-state">
+        <svg class="icon-lg"><use href="#i-book"/></svg>
+        <p>Ancora nessuna ricetta. Iniziamo?</p>
+        <a class="button primary" href="/recipes/new">
+          <svg class="icon"><use href="#i-plus"/></svg> Crea la prima ricetta
+        </a>
+      </div>
+    {% endif %}
+  </section>
 {% endblock %}

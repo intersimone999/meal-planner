@@ -1,30 +1,46 @@
 {% extends "base.html" %}
 {% block title %}Modelli — menuapp{% endblock %}
 {% block content %}
-  <h1>Modelli di settimana</h1>
-  <p><a class="button" href="/mealplans/new">+ Nuovo modello</a></p>
+  <div class="page-header">
+    <h1>Modelli di settimana</h1>
+    <div class="actions">
+      <a class="button primary" href="/mealplans/new">
+        <svg class="icon"><use href="#i-plus"/></svg> Nuovo modello
+      </a>
+    </div>
+  </div>
 
   {% if rows %}
     <table>
-      <thead><tr><th>Nome</th><th>Slot compilati</th><th>Azioni</th></tr></thead>
+      <thead><tr><th>Nome</th><th>Slot compilati</th><th style="width:12rem">Azioni</th></tr></thead>
       <tbody>
         {% for tpl, usage in rows %}
           <tr>
             <td><a href="/mealplans/{{ tpl.id }}/edit">{{ tpl.name }}</a></td>
-            <td>{{ usage }} / 14</td>
+            <td class="muted">{{ usage }} / 14</td>
             <td>
               <a class="button" href="/mealplans/{{ tpl.id }}/edit">Modifica</a>
               <button class="button danger"
                       hx-post="/mealplans/{{ tpl.id }}/delete"
                       hx-confirm="Eliminare il modello «{{ tpl.name }}»?"
                       hx-target="closest tr"
-                      hx-swap="outerHTML">Elimina</button>
+                      hx-swap="outerHTML">
+                <svg class="icon"><use href="#i-x"/></svg>
+              </button>
             </td>
           </tr>
         {% endfor %}
       </tbody>
     </table>
   {% else %}
-    <p><em>Nessun modello. Creane uno per applicarlo poi a una settimana del piano.</em></p>
+    <div class="card">
+      <div class="empty-state">
+        <svg class="icon-lg"><use href="#i-layout"/></svg>
+        <p>Nessun modello. Creane uno per applicarlo poi a una settimana del piano.</p>
+        <a class="button primary" href="/mealplans/new">
+          <svg class="icon"><use href="#i-plus"/></svg> Crea il primo modello
+        </a>
+      </div>
+    </div>
   {% endif %}
 {% endblock %}

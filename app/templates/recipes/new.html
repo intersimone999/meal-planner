@@ -1,24 +1,27 @@
 {% extends "base.html" %}
 {% block title %}Nuova ricetta — menuapp{% endblock %}
 {% block content %}
-  <h1>Nuova ricetta</h1>
+  <div class="page-header">
+    <h1>Nuova ricetta</h1>
+  </div>
 
-  {% if error %}<p class="error">{{ error }}</p>{% endif %}
+  {% if error %}<div class="error">{{ error }}</div>{% endif %}
 
-  <form method="post" action="/recipes" class="recipe-form">
-    <label>
-      Nome
-      <input type="text" name="name" value="{{ name or '' }}" required autofocus maxlength="200">
-    </label>
-    <label>
-      Note <span class="hint">(opzionale)</span>
-      <textarea name="notes" rows="4">{{ notes or '' }}</textarea>
-    </label>
-    <div class="actions">
-      <button type="submit" class="button primary">Salva e continua</button>
-      <a class="button" href="/recipes">Annulla</a>
-    </div>
-  </form>
-
-  <p class="hint">Dopo il salvataggio potrai aggiungere gli ingredienti.</p>
+  <div class="card">
+    <form method="post" action="/recipes" class="form-stack">
+      <div>
+        <label for="name">Nome</label>
+        <input id="name" type="text" name="name" value="{{ name or '' }}" required autofocus maxlength="200" placeholder="es. Pasta al pesto">
+      </div>
+      <div>
+        <label for="notes">Note <span class="hint">(opzionale)</span></label>
+        <textarea id="notes" name="notes" rows="4">{{ notes or '' }}</textarea>
+      </div>
+      <div class="form-actions">
+        <button type="submit" class="button primary">Salva e continua</button>
+        <a class="button" href="/recipes">Annulla</a>
+      </div>
+    </form>
+    <p class="hint" style="margin-top:1rem">Dopo il salvataggio potrai aggiungere gli ingredienti.</p>
+  </div>
 {% endblock %}

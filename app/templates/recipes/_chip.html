@@ -1,5 +1,3 @@
-{# Chip fragment. When included from edit.html, uses `link.ingredient`. When
-   returned from POST /recipes/{id}/ingredients, uses `ingredient` directly. #}
 {% set ing = ingredient if ingredient is defined else link.ingredient %}
 <span class="chip removable" id="chip-{{ ing.id }}">
   {{ ing.name }}

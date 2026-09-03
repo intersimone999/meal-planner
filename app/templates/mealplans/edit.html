@@ -1,22 +1,26 @@
 {% extends "base.html" %}
 {% block title %}{{ template.name }} — menuapp{% endblock %}
 {% block content %}
-  <div class="planner-header">
+  <div class="page-header">
     <h1>Modello · {{ template.name }}</h1>
-    <a class="button" href="/mealplans">Tutti i modelli</a>
+    <div class="actions">
+      <a class="button" href="/mealplans">‹ Tutti i modelli</a>
+    </div>
   </div>
 
-  {% if error %}<p class="error">{{ error }}</p>{% endif %}
+  {% if error %}<div class="error">{{ error }}</div>{% endif %}
 
-  <form method="post" action="/mealplans/{{ template.id }}" class="recipe-form">
-    <label>
-      Nome
-      <input type="text" name="name" value="{{ template.name }}" required maxlength="120">
-    </label>
-    <div class="actions">
-      <button type="submit" class="button">Rinomina</button>
-    </div>
-  </form>
+  <div class="card">
+    <form method="post" action="/mealplans/{{ template.id }}" class="form-stack">
+      <div>
+        <label for="name">Nome</label>
+        <input id="name" type="text" name="name" value="{{ template.name }}" required maxlength="120">
+      </div>
+      <div class="form-actions">
+        <button type="submit" class="button primary">Rinomina</button>
+      </div>
+    </form>
+  </div>
 
   <table class="planner">
     <thead>
@@ -42,8 +46,13 @@
     </tbody>
   </table>
 
-  <form method="post" action="/mealplans/{{ template.id }}/delete" class="delete-form"
-        onsubmit="return confirm('Eliminare il modello «{{ template.name }}»?');">
-    <button type="submit" class="button danger">Elimina modello</button>
-  </form>
+  <div class="card">
+    <h2>Zona pericolosa</h2>
+    <form method="post" action="/mealplans/{{ template.id }}/delete"
+          onsubmit="return confirm('Eliminare il modello «{{ template.name }}»?');">
+      <button type="submit" class="button danger">
+        <svg class="icon"><use href="#i-x"/></svg> Elimina modello
+      </button>
+    </form>
+  </div>
 {% endblock %}

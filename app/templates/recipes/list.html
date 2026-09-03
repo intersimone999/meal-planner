@@ -1,13 +1,19 @@
 {% extends "base.html" %}
 {% block title %}Ricette — menuapp{% endblock %}
 {% block content %}
-  <h1>Ricette</h1>
-  <p><a class="button" href="/recipes/new">+ Nuova ricetta</a></p>
+  <div class="page-header">
+    <h1>Ricette</h1>
+    <div class="actions">
+      <a class="button primary" href="/recipes/new">
+        <svg class="icon"><use href="#i-plus"/></svg> Nuova ricetta
+      </a>
+    </div>
+  </div>
 
   {% if recipes %}
-    <table class="recipes">
+    <table>
       <thead>
-        <tr><th>Nome</th><th>Ingredienti</th><th>Azioni</th></tr>
+        <tr><th>Nome</th><th>Ingredienti</th><th style="width:12rem">Azioni</th></tr>
       </thead>
       <tbody>
         {% for r in recipes %}
@@ -15,7 +21,9 @@
             <td><a href="/recipes/{{ r.id }}/edit">{{ r.name }}</a></td>
             <td>
               {% if r.ingredients %}
-                {% for link in r.ingredients %}<span class="chip">{{ link.ingredient.name }}</span>{% endfor %}
+                <div class="chips" style="min-height:auto;margin:0">
+                  {% for link in r.ingredients %}<span class="chip">{{ link.ingredient.name }}</span>{% endfor %}
+                </div>
               {% else %}
                 <em>nessuno</em>
               {% endif %}
@@ -26,13 +34,23 @@
                       hx-post="/recipes/{{ r.id }}/delete"
                       hx-confirm="Eliminare la ricetta «{{ r.name }}»?"
                       hx-target="closest tr"
-                      hx-swap="outerHTML">Elimina</button>
+                      hx-swap="outerHTML">
+                <svg class="icon"><use href="#i-x"/></svg>
+              </button>
             </td>
           </tr>
         {% endfor %}
       </tbody>
     </table>
   {% else %}
-    <p><em>Nessuna ricetta. Aggiungine una per iniziare.</em></p>
+    <div class="card">
+      <div class="empty-state">
+        <svg class="icon-lg"><use href="#i-book"/></svg>
+        <p>Nessuna ricetta. Aggiungine una per iniziare.</p>
+        <a class="button primary" href="/recipes/new">
+          <svg class="icon"><use href="#i-plus"/></svg> Crea la prima ricetta
+        </a>
+      </div>
+    </div>
   {% endif %}
 {% endblock %}

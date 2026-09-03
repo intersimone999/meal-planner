@@ -1,4 +1,3 @@
-{# One planner cell. Set outer scope: year, week, slot; either `d` (grid) or `day`, and `meal`. #}
 {% set _day = day if day is defined else d %}
 <td class="cell {% if meal %}filled{% else %}empty{% endif %}" id="cell-{{ _day }}-{{ slot }}">
   {% if meal %}

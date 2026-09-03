@@ -1,4 +1,3 @@
-{# Editing form for a single template cell. Requires: template_id, day, slot, entry, recipes. #}
 <td class="cell editing" id="tcell-{{ day }}-{{ slot }}">
   <form hx-post="/mealplans/{{ template_id }}/cell/{{ day }}/{{ slot }}"
         hx-target="#tcell-{{ day }}-{{ slot }}"

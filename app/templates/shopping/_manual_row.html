@@ -1,11 +1,10 @@
-{# Manual-shopping-item row. Requires: item. #}
 <li id="manual-{{ item.id }}" class="{% if item.checked %}checked{% endif %}">
   <button class="check-btn"
           hx-post="/shopping/manual/{{ item.id }}/toggle"
           hx-target="#manual-{{ item.id }}"
           hx-swap="outerHTML"
           title="{% if item.checked %}Segna come da comprare{% else %}Segna come preso{% endif %}">
-    {% if item.checked %}✓{% else %}○{% endif %}
+    <svg class="icon"><use href="#i-check"/></svg>
   </button>
   <span class="name">{{ item.name }}</span>
   <button class="remove-btn"
@@ -13,5 +12,7 @@
           hx-target="#manual-{{ item.id }}"
           hx-swap="outerHTML"
           hx-confirm="Rimuovere «{{ item.name }}»?"
-          title="Rimuovi">×</button>
+          title="Rimuovi">
+    <svg class="icon"><use href="#i-x"/></svg>
+  </button>
 </li>

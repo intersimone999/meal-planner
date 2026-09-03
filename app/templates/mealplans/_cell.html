@@ -1,4 +1,3 @@
-{# One template cell. Requires: template_id, day, slot; entry may be None. #}
 <td class="cell {% if entry %}filled{% else %}empty{% endif %}" id="tcell-{{ day }}-{{ slot }}">
   {% if entry %}
     <a class="cell-recipe" href="/recipes/{{ entry.recipe.id }}/edit">{{ entry.recipe.name }}</a>
