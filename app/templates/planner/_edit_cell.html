@@ -1,0 +1,21 @@
+{# Editing form for a single planner cell. #}
+<td class="cell editing" id="cell-{{ day }}-{{ slot }}">
+  <form hx-post="/planner/{{ year }}/{{ week }}/{{ day }}/{{ slot }}"
+        hx-target="#cell-{{ day }}-{{ slot }}"
+        hx-swap="outerHTML"
+        class="cell-edit-form">
+    <select name="recipe_id" autofocus required>
+      <option value="">— scegli —</option>
+      {% for r in recipes %}
+        <option value="{{ r.id }}"{% if meal and meal.recipe_id == r.id %} selected{% endif %}>{{ r.name }}</option>
+      {% endfor %}
+    </select>
+    <div class="cell-actions">
+      <button type="submit" class="button primary">Salva</button>
+      <button type="button" class="button"
+              hx-get="/planner/{{ year }}/{{ week }}/{{ day }}/{{ slot }}"
+              hx-target="#cell-{{ day }}-{{ slot }}"
+              hx-swap="outerHTML">Annulla</button>
+    </div>
+  </form>
+</td>

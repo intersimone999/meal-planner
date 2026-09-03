@@ -157,3 +157,101 @@ th { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.02em; colo
   border: 1px solid #bbb;
   border-radius: 4px;
 }
+
+/* Planner */
+.planner-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+.planner-header h1 {
+  margin: 0;
+  font-size: 1.1rem;
+  flex: 1;
+  min-width: 12rem;
+}
+
+table.planner { table-layout: fixed; }
+table.planner th.day-col { width: 6rem; }
+table.planner th { text-align: left; }
+table.planner .day-col {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  text-transform: none;
+  letter-spacing: 0;
+  color: #222;
+  font-size: 0.95rem;
+}
+table.planner .day-name { font-weight: 700; }
+table.planner .day-date { color: #888; font-size: 0.8rem; }
+
+td.cell {
+  height: 3rem;
+  padding: 0.35rem 0.5rem;
+  position: relative;
+  vertical-align: middle;
+}
+td.cell.empty { background: #fafafa; }
+td.cell.filled { background: #eef7ee; }
+td.cell.editing { background: #fffbe6; }
+.cell-add {
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  border: 1px dashed #ccc;
+  border-radius: 4px;
+  color: #888;
+  cursor: pointer;
+  font-size: 1.15rem;
+  padding: 0;
+}
+.cell-add:hover { background: #f0f0f0; color: #333; }
+.cell-recipe {
+  color: #234;
+  text-decoration: none;
+  font-weight: 500;
+  padding-right: 1.5rem;
+  display: inline-block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+  vertical-align: middle;
+}
+.cell-recipe:hover { text-decoration: underline; }
+.cell-remove {
+  position: absolute;
+  top: 0.25rem;
+  right: 0.3rem;
+  background: transparent;
+  border: 0;
+  color: #789;
+  cursor: pointer;
+  font-size: 1.15rem;
+  line-height: 1;
+  padding: 0.1rem 0.3rem;
+}
+.cell-remove:hover { color: #900; }
+.cell-edit-form { display: flex; flex-direction: column; gap: 0.35rem; }
+.cell-edit-form select {
+  font: inherit;
+  padding: 0.3rem 0.4rem;
+  border: 1px solid #bbb;
+  border-radius: 4px;
+  max-width: 100%;
+}
+.cell-actions { display: flex; gap: 0.35rem; }
+.cell-actions .button { padding: 0.2rem 0.55rem; font-size: 0.9rem; }
+
+/* Mobile tuning */
+@media (max-width: 480px) {
+  table.planner th.day-col { width: 4rem; }
+  table.planner .day-name { font-size: 0.9rem; }
+  table.planner .day-date { font-size: 0.7rem; }
+  td.cell { padding: 0.25rem 0.35rem; height: 2.75rem; }
+  .cell-recipe { font-size: 0.9rem; }
+  .planner-header h1 { font-size: 1rem; }
+}
