@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Import / Export — menuapp{% endblock %}
+{% block content %}
+  <h1>Import / Export</h1>
+
+  <section>
+    <h2>Esporta</h2>
+    <p>Scarica un JSON con tutti gli ingredienti, le ricette e i modelli.</p>
+    <p><a class="button primary" href="/export">Scarica JSON</a></p>
+    <p class="hint">Il piano settimanale e la lista della spesa non sono inclusi.</p>
+  </section>
+
+  <section>
+    <h2>Importa</h2>
+    <p>Carica un JSON esportato in precedenza. Le ricette e i modelli già presenti (per nome) vengono <strong>saltati</strong>, mai sovrascritti.</p>
+
+    {% if error %}<p class="error">{{ error }}</p>{% endif %}
+
+    <form method="post" action="/import" enctype="multipart/form-data" class="recipe-form">
+      <label>
+        File JSON
+        <input type="file" name="file" accept="application/json,.json" required>
+      </label>
+      <div class="actions">
+        <button type="submit" class="button primary">Importa</button>
+      </div>
+    </form>
+
+    {% if summary %}
+      <div class="import-summary">
+        <h3>Risultato dell'ultimo import</h3>
+        <ul>
+          <li>Ingredienti creati: <strong>{{ summary.ingredients_created }}</strong></li>
+          <li>Ricette create: <strong>{{ summary.recipes_created }}</strong> (saltate perché già presenti: {{ summary.recipes_skipped }})</li>
+          <li>Modelli creati: <strong>{{ summary.templates_created }}</strong> (saltati perché già presenti: {{ summary.templates_skipped }})</li>
+          <li>Slot orfani (ricetta non trovata): <strong>{{ summary.orphaned_slots }}</strong></li>
+          {% if summary.invalid_rows %}
+            <li>Righe non valide ignorate: <strong>{{ summary.invalid_rows }}</strong></li>
+          {% endif %}
+        </ul>
+      </div>
+    {% endif %}
+  </section>
+{% endblock %}

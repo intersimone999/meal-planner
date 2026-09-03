@@ -16,6 +16,16 @@ COPY app ./app
 ENV MENUAPP_DB_PATH=/data/menuapp.db
 VOLUME ["/data"]
 
+# Auth env vars (all optional):
+#   MENUAPP_USER, MENUAPP_PASSWORD   → enables login; if either is unset the
+#                                      login page is bypassed and a warning
+#                                      is logged (dev mode).
+#   MENUAPP_SESSION_SECRET           → session-cookie signing key. If unset,
+#                                      a random one is generated per process
+#                                      start (sessions won't survive restart).
+#   MENUAPP_HTTPS_ONLY=true          → set when serving over HTTPS so the
+#                                      session cookie is marked Secure.
+
 EXPOSE 8000
 
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]

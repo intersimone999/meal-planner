@@ -16,6 +16,12 @@
       <a href="/planner">Piano</a>
       <a href="/mealplans">Modelli</a>
       <a href="/shopping">Spesa</a>
+      <a href="/import">Import/Export</a>
+      {% if not is_auth_bypassed() %}
+        <form method="post" action="/logout" class="logout-form">
+          <button type="submit" class="button">Esci</button>
+        </form>
+      {% endif %}
     </nav>
   </header>
   <main>
