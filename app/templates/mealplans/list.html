@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Modelli — menuapp{% endblock %}
+{% block content %}
+  <h1>Modelli di settimana</h1>
+  <p><a class="button" href="/mealplans/new">+ Nuovo modello</a></p>
+
+  {% if rows %}
+    <table>
+      <thead><tr><th>Nome</th><th>Slot compilati</th><th>Azioni</th></tr></thead>
+      <tbody>
+        {% for tpl, usage in rows %}
+          <tr>
+            <td><a href="/mealplans/{{ tpl.id }}/edit">{{ tpl.name }}</a></td>
+            <td>{{ usage }} / 14</td>
+            <td>
+              <a class="button" href="/mealplans/{{ tpl.id }}/edit">Modifica</a>
+              <button class="button danger"
+                      hx-post="/mealplans/{{ tpl.id }}/delete"
+                      hx-confirm="Eliminare il modello «{{ tpl.name }}»?"
+                      hx-target="closest tr"
+                      hx-swap="outerHTML">Elimina</button>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p><em>Nessun modello. Creane uno per applicarlo poi a una settimana del piano.</em></p>
+  {% endif %}
+{% endblock %}

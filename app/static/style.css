@@ -246,6 +246,25 @@ td.cell.editing { background: #fffbe6; }
 .cell-actions { display: flex; gap: 0.35rem; }
 .cell-actions .button { padding: 0.2rem 0.55rem; font-size: 0.9rem; }
 
+/* Apply-template form on the planner */
+.apply-template {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+  padding: 0.5rem 0.75rem;
+  background: #f6f6f6;
+  border-radius: 4px;
+}
+.apply-template label { font-weight: 600; }
+.apply-template select {
+  font: inherit;
+  padding: 0.3rem 0.4rem;
+  border: 1px solid #bbb;
+  border-radius: 4px;
+}
+
 /* Shopping list */
 .shopping {
   display: grid;

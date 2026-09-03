@@ -1,0 +1,17 @@
+{# One template cell. Requires: template_id, day, slot; entry may be None. #}
+<td class="cell {% if entry %}filled{% else %}empty{% endif %}" id="tcell-{{ day }}-{{ slot }}">
+  {% if entry %}
+    <a class="cell-recipe" href="/recipes/{{ entry.recipe.id }}/edit">{{ entry.recipe.name }}</a>
+    <button class="cell-remove"
+            hx-delete="/mealplans/{{ template_id }}/cell/{{ day }}/{{ slot }}"
+            hx-target="#tcell-{{ day }}-{{ slot }}"
+            hx-swap="outerHTML"
+            title="Rimuovi">×</button>
+  {% else %}
+    <button class="cell-add"
+            hx-get="/mealplans/{{ template_id }}/cell/{{ day }}/{{ slot }}/edit"
+            hx-target="#tcell-{{ day }}-{{ slot }}"
+            hx-swap="outerHTML"
+            title="Aggiungi una ricetta">+</button>
+  {% endif %}
+</td>

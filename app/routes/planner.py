@@ -1,11 +1,12 @@
 from fastapi import APIRouter, Depends, Form, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy import select
+from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 from sqlalchemy.orm import Session, selectinload
 
 from app.deps import get_session, templates
 from app.i18n import DAY_NAMES_SHORT, SLOT_LABELS, SLOTS, format_day_month
-from app.models import PlannedMeal, Recipe
+from app.models import MealPlanTemplate, PlannedMeal, Recipe, TemplateSlot
 from app.weekutil import current_iso_year_week, iso_week_dates, shift_iso_week
 
 router = APIRouter(prefix="/planner", tags=["planner"])
@@ -61,6 +62,9 @@ def show_week(
     dates = iso_week_dates(year, week)
     prev_y, prev_w = shift_iso_week(year, week, -1)
     next_y, next_w = shift_iso_week(year, week, +1)
+    mealplans = session.scalars(
+        select(MealPlanTemplate).order_by(MealPlanTemplate.name)
+    ).all()
     return templates.TemplateResponse(
         request,
         "planner/index.html",
@@ -77,6 +81,7 @@ def show_week(
             "prev_week": prev_w,
             "next_year": next_y,
             "next_week": next_w,
+            "mealplans": mealplans,
         },
     )
 
@@ -173,3 +178,35 @@ def remove_cell(
         session.delete(existing)
         session.commit()
     return _cell_response(request, year, week, day, slot, None)
+
+
+@router.post("/{year}/{week}/apply")
+def apply_template(
+    year: int,
+    week: int,
+    template_id: int = Form(...),
+    session: Session = Depends(get_session),
+):
+    tpl = session.scalar(
+        select(MealPlanTemplate)
+        .where(MealPlanTemplate.id == template_id)
+        .options(selectinload(MealPlanTemplate.slots))
+    )
+    if not tpl:
+        raise HTTPException(status_code=404, detail="Modello non trovato")
+    if tpl.slots:
+        # ON CONFLICT DO NOTHING respects the UNIQUE(year, week, day, slot)
+        # constraint on planned_meals → fills only empty slots, never overwrites.
+        rows = [
+            {
+                "year": year, "week": week,
+                "day": s.day, "slot": s.slot, "recipe_id": s.recipe_id,
+            }
+            for s in tpl.slots
+        ]
+        stmt = sqlite_insert(PlannedMeal).values(rows).on_conflict_do_nothing(
+            index_elements=["year", "week", "day", "slot"]
+        )
+        session.execute(stmt)
+        session.commit()
+    return RedirectResponse(url=f"/planner/{year}/{week}", status_code=303)

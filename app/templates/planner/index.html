@@ -8,6 +8,20 @@
     <a class="button" href="/planner/{{ next_year }}/{{ next_week }}" title="Settimana successiva">Successiva ›</a>
   </div>
 
+  {% if mealplans %}
+    <form method="post" action="/planner/{{ year }}/{{ week }}/apply" class="apply-template">
+      <label for="template_id">Applica modello</label>
+      <select name="template_id" id="template_id" required>
+        <option value="">— scegli —</option>
+        {% for t in mealplans %}
+          <option value="{{ t.id }}">{{ t.name }}</option>
+        {% endfor %}
+      </select>
+      <button type="submit" class="button">Applica</button>
+      <span class="hint">Riempie solo gli slot vuoti; non sovrascrive nulla.</span>
+    </form>
+  {% endif %}
+
   <table class="planner">
     <thead>
       <tr>

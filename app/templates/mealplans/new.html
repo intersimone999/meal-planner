@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Nuovo modello — menuapp{% endblock %}
+{% block content %}
+  <h1>Nuovo modello di settimana</h1>
+
+  {% if error %}<p class="error">{{ error }}</p>{% endif %}
+
+  <form method="post" action="/mealplans" class="recipe-form">
+    <label>
+      Nome
+      <input type="text" name="name" value="{{ name or '' }}" required autofocus maxlength="120"
+             placeholder="es. Settimana standard">
+    </label>
+    <div class="actions">
+      <button type="submit" class="button primary">Salva e continua</button>
+      <a class="button" href="/mealplans">Annulla</a>
+    </div>
+  </form>
+
+  <p class="hint">Dopo il salvataggio potrai comporre la griglia con le ricette.</p>
+{% endblock %}

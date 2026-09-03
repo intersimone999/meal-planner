@@ -1,0 +1,21 @@
+{# Editing form for a single template cell. Requires: template_id, day, slot, entry, recipes. #}
+<td class="cell editing" id="tcell-{{ day }}-{{ slot }}">
+  <form hx-post="/mealplans/{{ template_id }}/cell/{{ day }}/{{ slot }}"
+        hx-target="#tcell-{{ day }}-{{ slot }}"
+        hx-swap="outerHTML"
+        class="cell-edit-form">
+    <select name="recipe_id" autofocus required>
+      <option value="">— scegli —</option>
+      {% for r in recipes %}
+        <option value="{{ r.id }}"{% if entry and entry.recipe_id == r.id %} selected{% endif %}>{{ r.name }}</option>
+      {% endfor %}
+    </select>
+    <div class="cell-actions">
+      <button type="submit" class="button primary">Salva</button>
+      <button type="button" class="button"
+              hx-get="/mealplans/{{ template_id }}/cell/{{ day }}/{{ slot }}"
+              hx-target="#tcell-{{ day }}-{{ slot }}"
+              hx-swap="outerHTML">Annulla</button>
+    </div>
+  </form>
+</td>

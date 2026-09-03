@@ -6,7 +6,7 @@ from fastapi.staticfiles import StaticFiles
 
 from app.db import init_db
 from app.deps import templates
-from app.routes import ingredients, planner, recipes, shopping
+from app.routes import ingredients, mealplans, planner, recipes, shopping
 
 
 @asynccontextmanager
@@ -22,6 +22,7 @@ app.mount("/static", StaticFiles(directory="app/static"), name="static")
 app.include_router(recipes.router)
 app.include_router(ingredients.router)
 app.include_router(planner.router)
+app.include_router(mealplans.router)
 app.include_router(shopping.router)
 
 

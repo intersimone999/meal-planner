@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}{{ template.name }} — menuapp{% endblock %}
+{% block content %}
+  <div class="planner-header">
+    <h1>Modello · {{ template.name }}</h1>
+    <a class="button" href="/mealplans">Tutti i modelli</a>
+  </div>
+
+  {% if error %}<p class="error">{{ error }}</p>{% endif %}
+
+  <form method="post" action="/mealplans/{{ template.id }}" class="recipe-form">
+    <label>
+      Nome
+      <input type="text" name="name" value="{{ template.name }}" required maxlength="120">
+    </label>
+    <div class="actions">
+      <button type="submit" class="button">Rinomina</button>
+    </div>
+  </form>
+
+  <table class="planner">
+    <thead>
+      <tr>
+        <th class="day-col">Giorno</th>
+        {% for slot in slots %}
+          <th>{{ slot_labels[slot] }}</th>
+        {% endfor %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for d in range(7) %}
+        <tr>
+          <th class="day-col"><span class="day-name">{{ day_names[d] }}</span></th>
+          {% for slot in slots %}
+            {% set entry = grid.get((d, slot)) %}
+            {% set day = d %}
+            {% set template_id = template.id %}
+            {% include "mealplans/_cell.html" with context %}
+          {% endfor %}
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <form method="post" action="/mealplans/{{ template.id }}/delete" class="delete-form"
+        onsubmit="return confirm('Eliminare il modello «{{ template.name }}»?');">
+    <button type="submit" class="button danger">Elimina modello</button>
+  </form>
+{% endblock %}
