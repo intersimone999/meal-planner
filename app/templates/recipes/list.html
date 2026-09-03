@@ -19,11 +19,14 @@
         {% for r in recipes %}
           <tr>
             <td><a href="/recipes/{{ r.id }}/edit">{{ r.name }}</a></td>
-            <td><span class="chip type-{{ r.type }}">{{ type_label(r.type) }}</span></td>
+            <td><span class="chip type-{{ r.type }}">{{ type_emoji(r.type) }} {{ type_label(r.type) }}</span></td>
             <td>
               {% if r.ingredients %}
                 <div class="chips" style="min-height:auto;margin:0">
-                  {% for link in r.ingredients %}<span class="chip plain">{{ link.ingredient.name }}</span>{% endfor %}
+                  {% for link in r.ingredients %}
+                    {% set e = ing_emoji(link.ingredient.name) %}
+                    <span class="chip plain">{% if e %}{{ e }} {% endif %}{{ link.ingredient.name }}</span>
+                  {% endfor %}
                 </div>
               {% else %}
                 <em>nessuno</em>

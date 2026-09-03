@@ -16,7 +16,7 @@
               <ul class="dish-list compact">
                 {% for m in meals %}
                   <li class="dish">
-                    <span class="dish-type type-{{ m.recipe.type }}">{{ type_label(m.recipe.type) }}</span>
+                    <span class="dish-type type-{{ m.recipe.type }}">{{ type_emoji(m.recipe.type) }} {{ type_label(m.recipe.type) }}</span>
                     <a class="dish-name" href="/recipes/{{ m.recipe.id }}/edit">{{ m.recipe.name }}</a>
                   </li>
                 {% endfor %}
@@ -57,7 +57,7 @@
       <div class="recent-recipes">
         {% for r in recent_recipes %}
           <a href="/recipes/{{ r.id }}/edit">
-            <span class="chip type-{{ r.type }}" style="margin-right:0.4rem">{{ type_label(r.type) }}</span>
+            <span class="chip type-{{ r.type }}" style="margin-right:0.4rem">{{ type_emoji(r.type) }} {{ type_label(r.type) }}</span>
             {{ r.name }}
           </a>
         {% endfor %}

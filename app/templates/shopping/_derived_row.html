@@ -6,5 +6,6 @@
           title="{% if checked %}Segna come da comprare{% else %}Segna come preso{% endif %}">
     <svg class="icon"><use href="#i-check"/></svg>
   </button>
-  <span class="name">{{ ing.name }}</span>
+  {% set e = ing_emoji(ing.name) %}
+  <span class="name">{% if e %}{{ e }} {% endif %}{{ ing.name }}</span>
 </li>

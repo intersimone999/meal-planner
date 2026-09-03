@@ -3,7 +3,7 @@
     <ul class="dish-list">
       {% for e in entries %}
         <li class="dish existing">
-          <span class="dish-type type-{{ e.recipe.type }}">{{ type_label(e.recipe.type) }}</span>
+          <span class="dish-type type-{{ e.recipe.type }}">{{ type_emoji(e.recipe.type) }} {{ type_label(e.recipe.type) }}</span>
           <span class="dish-name">{{ e.recipe.name }}</span>
         </li>
       {% endfor %}
@@ -18,7 +18,7 @@
       <select name="recipe_id" autofocus required>
         <option value="">— scegli —</option>
         {% for r in recipes %}
-          <option value="{{ r.id }}">{{ type_label(r.type) }} · {{ r.name }}</option>
+          <option value="{{ r.id }}">{{ type_emoji(r.type) }} {{ type_label(r.type) }} · {{ r.name }}</option>
         {% endfor %}
       </select>
       <div class="cell-actions">

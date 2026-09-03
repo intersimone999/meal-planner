@@ -133,6 +133,9 @@ A personal, self-hosted webapp for weekly meal planning. It turns "cosa cucino q
 - **HTMX** for partial updates. No JS framework, no bundler, no build step.
 - **Italian throughout:** all labels, buttons, page titles, headings, tooltips, and error messages user-visible in the browser are in Italian.
 - **Mobile-usable:** the planner grid and shopping list must be readable and interactive at 375px width.
+- **Emoji hints:**
+  - Every recipe type carries a fixed emoji (rendered next to the label in badges and pickers).
+  - Ingredient names are auto-decorated with an emoji picked from a hand-maintained Italian keyword table (whole-word, accent-insensitive match). The lookup is presentation-only — nothing is stored in the DB. Names without a keyword match render without an emoji.
 
 ### 4.5 Reliability
 

@@ -53,9 +53,12 @@ app.add_middleware(
 # Expose auth state to all templates so nav can conditionally render logout.
 templates.env.globals["is_auth_bypassed"] = is_auth_bypassed
 
-# Recipe-type label helper — templates can call type_label(recipe.type) directly.
-from app.i18n import RECIPE_TYPE_LABELS  # noqa: E402
+# Presentation helpers — templates call these directly.
+from app.i18n import RECIPE_TYPE_EMOJIS, RECIPE_TYPE_LABELS  # noqa: E402
+from app.ingredient_emoji import emoji_for as _ing_emoji  # noqa: E402
 templates.env.globals["type_label"] = lambda t: RECIPE_TYPE_LABELS.get(t, t)
+templates.env.globals["type_emoji"] = lambda t: RECIPE_TYPE_EMOJIS.get(t, "")
+templates.env.globals["ing_emoji"] = _ing_emoji
 
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 

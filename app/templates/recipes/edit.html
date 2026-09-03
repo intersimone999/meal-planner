@@ -17,12 +17,15 @@
         <input id="name" type="text" name="name" value="{{ recipe.name }}" required maxlength="200">
       </div>
       <div>
-        <label for="type">Tipo</label>
-        <select id="type" name="type" required>
+        <label>Tipo</label>
+        <div class="type-picker" role="radiogroup" aria-label="Tipo ricetta">
           {% for t in types %}
-            <option value="{{ t }}" {% if recipe.type == t %}selected{% endif %}>{{ type_labels[t] }}</option>
+            <label class="type-tag">
+              <input type="radio" name="type" value="{{ t }}" {% if recipe.type == t %}checked{% endif %} required>
+              <span class="type-tag-label type-{{ t }}">{{ type_emoji(t) }} {{ type_labels[t] }}</span>
+            </label>
           {% endfor %}
-        </select>
+        </div>
       </div>
       <div>
         <label for="notes">Note <span class="hint">(opzionale)</span></label>

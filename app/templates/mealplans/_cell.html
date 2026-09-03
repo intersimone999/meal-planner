@@ -3,7 +3,7 @@
     <ul class="dish-list">
       {% for e in entries %}
         <li class="dish">
-          <span class="dish-type type-{{ e.recipe.type }}" title="{{ type_label(e.recipe.type) }}">{{ type_label(e.recipe.type) }}</span>
+          <span class="dish-type type-{{ e.recipe.type }}" title="{{ type_label(e.recipe.type) }}">{{ type_emoji(e.recipe.type) }} {{ type_label(e.recipe.type) }}</span>
           <a class="dish-name" href="/recipes/{{ e.recipe.id }}/edit">{{ e.recipe.name }}</a>
           <button class="dish-remove"
                   hx-delete="/mealplans/{{ template_id }}/cell/{{ day }}/{{ slot }}/{{ e.recipe_id }}"

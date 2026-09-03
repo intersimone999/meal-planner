@@ -43,6 +43,16 @@ RECIPE_TYPE_LABELS: dict[str, str] = {
     "altro":     "Altro",
 }
 
+RECIPE_TYPE_EMOJIS: dict[str, str] = {
+    "antipasto": "🫒",
+    "primo":     "🍝",
+    "secondo":   "🍖",
+    "contorno":  "🥗",
+    "frutta":    "🍎",
+    "dolce":     "🍰",
+    "altro":     "🍴",
+}
+
 # Numeric rank used for sort-order within a slot.
 RECIPE_TYPE_RANK: dict[str, int] = {t: i for i, t in enumerate(RECIPE_TYPES)}
 

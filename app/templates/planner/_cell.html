@@ -4,7 +4,7 @@
     <ul class="dish-list">
       {% for m in meals %}
         <li class="dish">
-          <span class="dish-type type-{{ m.recipe.type }}" title="{{ type_label(m.recipe.type) }}">{{ type_label(m.recipe.type) }}</span>
+          <span class="dish-type type-{{ m.recipe.type }}" title="{{ type_label(m.recipe.type) }}">{{ type_emoji(m.recipe.type) }} {{ type_label(m.recipe.type) }}</span>
           <a class="dish-name" href="/recipes/{{ m.recipe.id }}/edit">{{ m.recipe.name }}</a>
           <button class="dish-remove"
                   hx-delete="/planner/{{ year }}/{{ week }}/{{ _day }}/{{ slot }}/{{ m.recipe_id }}"

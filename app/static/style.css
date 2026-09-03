@@ -334,24 +334,59 @@ tbody tr:hover td { background: var(--surface-alt); }
 
 .chip.plain { background: var(--surface-alt); color: var(--text-muted); }
 
+/* Recipe-type tag picker (form input, radio buttons styled as pill tags).
+   Reuses the .type-* palette below via .type-tag-label.type-{name}. */
+.type-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.35rem;
+}
+.type-tag {
+  cursor: pointer;
+  position: relative;
+  user-select: none;
+}
+.type-tag input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+  width: 1px; height: 1px;
+}
+.type-tag-label {
+  display: inline-block;
+  padding: 0.4rem 0.85rem;
+  border-radius: var(--radius-full);
+  font-size: 0.85rem;
+  font-weight: 500;
+  border: 2px solid transparent;
+  transition: transform 60ms ease, border-color 120ms ease, box-shadow 120ms ease;
+}
+.type-tag:hover .type-tag-label { transform: translateY(-1px); }
+.type-tag input:checked + .type-tag-label {
+  border-color: currentColor;
+  font-weight: 700;
+}
+.type-tag input:focus-visible + .type-tag-label { box-shadow: var(--focus-ring); }
+
 /* Recipe-type chips. Each type gets a distinct hue for at-a-glance recognition.
    The saturation is kept soft so a row of chips doesn't overwhelm the page. */
-.chip.type-antipasto { background: #fdf2f8; color: #be185d; }
-.chip.type-primo     { background: #fef3c7; color: #a16207; }
-.chip.type-secondo   { background: #fee2e2; color: #b91c1c; }
-.chip.type-contorno  { background: #dcfce7; color: #166534; }
-.chip.type-frutta    { background: #ffedd5; color: #c2410c; }
-.chip.type-dolce     { background: #ede9fe; color: #6d28d9; }
-.chip.type-altro     { background: var(--surface-alt); color: var(--text-muted); }
+.chip.type-antipasto, .type-tag-label.type-antipasto { background: #fdf2f8; color: #be185d; }
+.chip.type-primo,     .type-tag-label.type-primo     { background: #fef3c7; color: #a16207; }
+.chip.type-secondo,   .type-tag-label.type-secondo   { background: #fee2e2; color: #b91c1c; }
+.chip.type-contorno,  .type-tag-label.type-contorno  { background: #dcfce7; color: #166534; }
+.chip.type-frutta,    .type-tag-label.type-frutta    { background: #ffedd5; color: #c2410c; }
+.chip.type-dolce,     .type-tag-label.type-dolce     { background: #ede9fe; color: #6d28d9; }
+.chip.type-altro,     .type-tag-label.type-altro     { background: var(--surface-alt); color: var(--text-muted); }
 
 @media (prefers-color-scheme: dark) {
-  .chip.type-antipasto { background: #4a1730; color: #f9a8d4; }
-  .chip.type-primo     { background: #422a00; color: #fde68a; }
-  .chip.type-secondo   { background: #4d1717; color: #fca5a5; }
-  .chip.type-contorno  { background: #103524; color: #86efac; }
-  .chip.type-frutta    { background: #3d2007; color: #fdba74; }
-  .chip.type-dolce     { background: #2a1e4a; color: #c4b5fd; }
-  .chip.type-altro     { background: var(--surface-alt); color: var(--text-muted); }
+  .chip.type-antipasto, .type-tag-label.type-antipasto { background: #4a1730; color: #f9a8d4; }
+  .chip.type-primo,     .type-tag-label.type-primo     { background: #422a00; color: #fde68a; }
+  .chip.type-secondo,   .type-tag-label.type-secondo   { background: #4d1717; color: #fca5a5; }
+  .chip.type-contorno,  .type-tag-label.type-contorno  { background: #103524; color: #86efac; }
+  .chip.type-frutta,    .type-tag-label.type-frutta    { background: #3d2007; color: #fdba74; }
+  .chip.type-dolce,     .type-tag-label.type-dolce     { background: #2a1e4a; color: #c4b5fd; }
+  .chip.type-altro,     .type-tag-label.type-altro     { background: var(--surface-alt); color: var(--text-muted); }
 }
 
 /* Add-ingredient row */

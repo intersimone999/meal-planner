@@ -6,7 +6,8 @@
           title="{% if item.checked %}Segna come da comprare{% else %}Segna come preso{% endif %}">
     <svg class="icon"><use href="#i-check"/></svg>
   </button>
-  <span class="name">{{ item.name }}</span>
+  {% set e = ing_emoji(item.name) %}
+  <span class="name">{% if e %}{{ e }} {% endif %}{{ item.name }}</span>
   <button class="remove-btn"
           hx-delete="/shopping/manual/{{ item.id }}"
           hx-target="#manual-{{ item.id }}"
