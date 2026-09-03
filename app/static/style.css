@@ -246,7 +246,75 @@ td.cell.editing { background: #fffbe6; }
 .cell-actions { display: flex; gap: 0.35rem; }
 .cell-actions .button { padding: 0.2rem 0.55rem; font-size: 0.9rem; }
 
+/* Shopping list */
+.shopping {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+}
+.shopping section {
+  padding: 1rem;
+  border-radius: 6px;
+  border: 1px solid rgba(0,0,0,0.08);
+}
+.shopping section.derived { background: #f2f8f2; }
+.shopping section.manual  { background: #f8f6ec; }
+.shopping section h2 { margin-top: 0; font-size: 1.05rem; }
+.shopping .hint { margin-top: -0.35rem; margin-bottom: 0.75rem; }
+
+.add-manual { display: flex; gap: 0.4rem; margin-bottom: 0.75rem; }
+.add-manual input {
+  flex: 1;
+  font: inherit;
+  padding: 0.4rem 0.6rem;
+  border: 1px solid #bbb;
+  border-radius: 4px;
+}
+
+.item-list { list-style: none; padding: 0; margin: 0; }
+.item-list li {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0;
+  border-bottom: 1px solid rgba(0,0,0,0.06);
+}
+.item-list li:last-child { border-bottom: 0; }
+.item-list .name { flex: 1; }
+.item-list li.checked .name { text-decoration: line-through; color: #999; }
+.check-btn {
+  background: transparent;
+  border: 1.5px solid #b8b8b8;
+  border-radius: 999px;
+  width: 1.6rem;
+  height: 1.6rem;
+  cursor: pointer;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  line-height: 1;
+  color: #999;
+  flex-shrink: 0;
+}
+.check-btn:hover { border-color: #666; }
+.item-list li.checked .check-btn {
+  background: #7abd7a;
+  border-color: #5a9d5a;
+  color: #fff;
+}
+.remove-btn {
+  background: transparent; border: 0; color: #a99;
+  cursor: pointer; font-size: 1.15rem; line-height: 1;
+  padding: 0 0.3rem;
+}
+.remove-btn:hover { color: #900; }
+
 /* Mobile tuning */
+@media (max-width: 640px) {
+  .shopping { grid-template-columns: 1fr; }
+}
 @media (max-width: 480px) {
   table.planner th.day-col { width: 4rem; }
   table.planner .day-name { font-size: 0.9rem; }
