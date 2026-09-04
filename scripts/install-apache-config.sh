@@ -12,9 +12,8 @@
 #
 # Requires root.
 #
-# Optional env vars (must match whatever's in .env when running via
-# `docker compose up`):
-#   MEAL_PLANNER_PORT=8000
+# Optional env vars:
+#   MEAL_PLANNER_PORT=8000        must match the port in docker-compose.yml
 #   MENUAPP_ROOT_PATH=/meal-planner
 #   APACHE_CONF_NAME=meal-planner  .conf filename (without extension)
 

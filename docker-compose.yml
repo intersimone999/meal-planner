@@ -29,7 +29,11 @@ services:
     ports:
       # Bind to 127.0.0.1 only — Apache proxies to it locally; the
       # container isn't reachable from outside the host.
-      - "127.0.0.1:${MEAL_PLANNER_PORT:-8000}:8000"
+      # Hardcoded because docker-compose v1 refuses interpolation
+      # between two ":" separators in a port mapping. If port 8000
+      # is taken, edit the number here (or add a
+      # docker-compose.override.yml).
+      - "127.0.0.1:8000:8000"
     volumes:
       # Host dir → /data mount for the SQLite file. Default `./data`
       # keeps things self-contained next to this compose file; on a
