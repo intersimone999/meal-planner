@@ -28,7 +28,7 @@
   <table class="planner">
     <thead>
       <tr>
-        <th class="day-col">Giorno</th>
+        <th class="day-col" aria-label="Giorno"></th>
         {% for slot in slots %}
           <th>{{ slot_labels[slot] }}</th>
         {% endfor %}
