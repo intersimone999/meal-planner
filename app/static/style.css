@@ -744,3 +744,18 @@ body.login-page {
 
 /* ---- HTMX loading indicator ---- */
 .htmx-request { opacity: 0.6; transition: opacity 100ms; }
+
+/* ---- Mobile tuning: narrow planner cells ---- */
+@media (max-width: 480px) {
+  table.planner th.day-col { width: 3.5rem; }
+  table.planner .day-name { font-size: 0.9rem; }
+  table.planner .day-date { font-size: 0.7rem; }
+  td.cell { padding: 0.25rem 0.3rem; }
+  .planner-header h1 { font-size: 1rem; }
+  /* Type pill: hide the label, keep the emoji + color, so the recipe name
+     has room. The `title` attribute preserves the label on hover. */
+  .dish-type .type-label { display: none; }
+  .dish-type { padding: 0.1rem 0.3rem; }
+  .dish { gap: 0.3rem; padding: 0.15rem 0.25rem; font-size: 0.85rem; }
+  .dish-name { font-size: 0.9rem; }
+}
