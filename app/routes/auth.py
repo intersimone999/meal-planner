@@ -2,7 +2,7 @@ from fastapi import APIRouter, Form, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 
 from app.deps import templates
-from app.security import is_auth_bypassed, safe_next, verify_credentials
+from app.security import is_auth_bypassed, safe_next, verify_password
 
 router = APIRouter(tags=["auth"])
 
@@ -19,7 +19,6 @@ def login_form(request: Request, next: str = "", error: str | None = None):
 @router.post("/login")
 def do_login(
     request: Request,
-    username: str = Form(""),
     password: str = Form(""),
     next: str = Form(""),
 ):
@@ -27,14 +26,14 @@ def do_login(
     if is_auth_bypassed():
         request.session["user"] = "dev"
         return RedirectResponse(url=target, status_code=303)
-    if not verify_credentials(username, password):
+    if not verify_password(password):
         return templates.TemplateResponse(
             request,
             "login.html",
-            {"next": target, "error": "Credenziali non valide.", "bypassed": False},
+            {"next": target, "error": "Password non valida.", "bypassed": False},
             status_code=401,
         )
-    request.session["user"] = username
+    request.session["user"] = "authenticated"
     return RedirectResponse(url=target, status_code=303)
 
 

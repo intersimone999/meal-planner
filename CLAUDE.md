@@ -72,7 +72,7 @@ Docker:
 
 ### Auth (see SPEC.md §4.2)
 
-Form-based login with a signed session cookie (Starlette `SessionMiddleware`), credentials from `MENUAPP_USER` / `MENUAPP_PASSWORD`. If either env var is unset at startup, auth is fully bypassed and a warning is logged — this is the dev mode. `MENUAPP_SESSION_SECRET` signs the cookie; generated at startup with a warning if unset. `/healthz`, `/login`, `/logout`, and `/static/*` are always unauthenticated.
+Single-user app → **master password only**, no usernames. Form-based login with a signed session cookie (Starlette `SessionMiddleware`), password from `MENUAPP_PASSWORD`. If unset at startup, auth is fully bypassed and a warning is logged — this is the dev mode. `MENUAPP_SESSION_SECRET` signs the cookie; generated at startup with a warning if unset. `/healthz`, `/login`, `/logout`, and `/static/*` are always unauthenticated.
 
 ### Suggested layout
 

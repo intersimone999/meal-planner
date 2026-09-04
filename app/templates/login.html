@@ -19,12 +19,8 @@
     <form method="post" action="/login" class="form-stack">
       <input type="hidden" name="next" value="{{ next }}">
       <div>
-        <label for="u">Utente</label>
-        <input id="u" type="text" name="username" autofocus autocomplete="username" {% if not bypassed %}required{% endif %}>
-      </div>
-      <div>
         <label for="p">Password</label>
-        <input id="p" type="password" name="password" autocomplete="current-password" {% if not bypassed %}required{% endif %}>
+        <input id="p" type="password" name="password" autofocus autocomplete="current-password" {% if not bypassed %}required{% endif %}>
       </div>
       <div class="form-actions">
         <button type="submit" class="button primary" style="flex:1;justify-content:center">Accedi</button>

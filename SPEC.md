@@ -112,15 +112,16 @@ A personal, self-hosted webapp for weekly meal planning. It turns "cosa cucino q
 
 ### 4.2 Authentication
 
-- **Form-based login page** at `/login` with fields for username and password. Not HTTP Basic Auth.
-- Credentials come from environment variables: `MENUAPP_USER`, `MENUAPP_PASSWORD`. Single user.
+- Single-user app → **single master password**, no usernames.
+- **Form-based login page** at `/login` with a single password field. Not HTTP Basic Auth.
+- The master password comes from the `MENUAPP_PASSWORD` environment variable.
 - **Session:** signed cookie via Starlette `SessionMiddleware`, 30-day expiry, `HttpOnly`, `SameSite=Lax`, `Secure` when served over HTTPS. Cookie survives browser restarts within its TTL.
 - **Session signing key:** `MENUAPP_SESSION_SECRET` env var. If unset, a random key is generated at startup and a warning is logged; sessions do not survive process restarts in that case.
 - **Logout** at `/logout` clears the session and redirects to `/login`.
 - Auth gates every route except `/login`, `/logout`, `/healthz`, and `/static/*`.
 - Unauthenticated requests to protected routes redirect to `/login?next=<original path>` and are returned to `next` after login.
-- **Development bypass:** if either `MENUAPP_USER` or `MENUAPP_PASSWORD` is unset, auth is bypassed entirely (login page is not shown, all routes are open) and a warning is logged at startup.
-- Password comparison is constant-time (`secrets.compare_digest`).
+- **Development bypass:** if `MENUAPP_PASSWORD` is unset, auth is bypassed entirely (login page still exists but accepts any input, and all routes are open) and a warning is logged at startup.
+- Password comparison is constant-time on the sha256 digest so it works with any Unicode input.
 
 ### 4.3 Persistence
 

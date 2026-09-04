@@ -1,11 +1,12 @@
 """Authentication configuration and middleware.
 
 Auth model per SPEC.md §4.2:
-- Form-based login page (/login), signed-cookie session (30 day TTL).
-- Credentials from env: MENUAPP_USER, MENUAPP_PASSWORD.
-- Session signing key from MENUAPP_SESSION_SECRET; generated + warned if unset.
-- Dev bypass: if either MENUAPP_USER or MENUAPP_PASSWORD is unset, auth is
-  fully disabled and a warning is emitted at startup.
+- Form-based login page (/login) with a single master-password field.
+- Master password from env MENUAPP_PASSWORD.
+- Signed-cookie session (30 day TTL) via Starlette SessionMiddleware,
+  signing key from MENUAPP_SESSION_SECRET (generated + warned if unset).
+- Dev bypass: if MENUAPP_PASSWORD is unset, auth is fully disabled and a
+  warning is emitted at startup.
 """
 
 from __future__ import annotations
@@ -40,32 +41,25 @@ else:
 HTTPS_ONLY: bool = os.environ.get("MENUAPP_HTTPS_ONLY", "false").lower() == "true"
 
 
-def get_credentials() -> tuple[str, str] | None:
-    """Return (user, password) from env, or None if either is unset (dev bypass)."""
-    u = os.environ.get("MENUAPP_USER")
-    p = os.environ.get("MENUAPP_PASSWORD")
-    if u and p:
-        return u, p
-    return None
+def get_master_password() -> str | None:
+    """Return the configured master password, or None if unset (dev bypass)."""
+    return os.environ.get("MENUAPP_PASSWORD") or None
 
 
 def is_auth_bypassed() -> bool:
-    return get_credentials() is None
+    return get_master_password() is None
 
 
 def _hash(s: str) -> bytes:
     return hashlib.sha256(s.encode("utf-8")).digest()
 
 
-def verify_credentials(username: str, password: str) -> bool:
-    creds = get_credentials()
-    if creds is None:
+def verify_password(password: str) -> bool:
+    expected = get_master_password()
+    if expected is None:
         return True
-    # Hash both sides so secrets.compare_digest works for non-ASCII and any
-    # length input (avoiding the ASCII-only restriction of string compare).
-    return secrets.compare_digest(_hash(username), _hash(creds[0])) and secrets.compare_digest(
-        _hash(password), _hash(creds[1])
-    )
+    # Hash both sides so secrets.compare_digest handles non-ASCII / any length.
+    return secrets.compare_digest(_hash(password), _hash(expected))
 
 
 def safe_next(next_url: str | None) -> str:
@@ -106,7 +100,7 @@ class AuthMiddleware(BaseHTTPMiddleware):
 def log_startup_warnings() -> None:
     if is_auth_bypassed():
         log.warning(
-            "MENUAPP_USER/MENUAPP_PASSWORD not set — auth is BYPASSED (dev mode)."
+            "MENUAPP_PASSWORD not set — auth is BYPASSED (dev mode)."
         )
     if _generated_secret:
         log.warning(

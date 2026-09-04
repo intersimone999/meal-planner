@@ -17,9 +17,9 @@ ENV MENUAPP_DB_PATH=/data/menuapp.db
 VOLUME ["/data"]
 
 # Auth env vars (all optional):
-#   MENUAPP_USER, MENUAPP_PASSWORD   → enables login; if either is unset the
-#                                      login page is bypassed and a warning
-#                                      is logged (dev mode).
+#   MENUAPP_PASSWORD                 → master password. If unset the login
+#                                      page accepts anything and every route
+#                                      is open (dev mode); a warning is logged.
 #   MENUAPP_SESSION_SECRET           → session-cookie signing key. If unset,
 #                                      a random one is generated per process
 #                                      start (sessions won't survive restart).
