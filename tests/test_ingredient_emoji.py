@@ -1,6 +1,11 @@
-"""Tests for the ingredient → emoji auto-lookup (app/ingredient_emoji.py)."""
+"""Tests for the ingredient → emoji + department auto-lookup."""
 
-from app.ingredient_emoji import emoji_for
+from app.ingredient_emoji import (
+    DEPARTMENTS,
+    DEPARTMENT_LABELS,
+    department_for,
+    emoji_for,
+)
 
 
 def test_common_single_words():
@@ -28,17 +33,12 @@ def test_plural_forms():
 
 
 def test_whole_word_not_substring():
-    # "pomelo" contains "pom" but not a whole "mela" or "pomodoro" word.
-    # Bug hedge: "melone" is its own keyword, so "melone" returns 🍈, not 🍎.
     assert emoji_for("melone") == "🍈"
-    # "pomelo" is unknown; must NOT match "mela" substring.
     assert emoji_for("pomelo") == ""
 
 
 def test_multi_word_qualifiers_win():
-    # "pesce spada" should hit its own emoji, not the generic pesce 🐟.
     assert emoji_for("pesce spada") == "🗡️"
-    # But plain "pesce" still gets the generic 🐟.
     assert emoji_for("pesce fresco") == "🐟"
 
 
@@ -49,9 +49,64 @@ def test_unknown_returns_empty():
 
 
 def test_compound_names_pick_first_match():
-    # An ingredient name with several matching words returns SOME emoji from
-    # the table (whichever pattern hits first in insertion order). We don't
-    # commit to which one — just that it's non-empty and comes from a known
-    # entry.
     e = emoji_for("insalata di pomodori")
     assert e in ("🥬", "🍅")
+
+
+# ---- department_for -----------------------------------------------------
+
+def test_department_for_known_ingredients():
+    # Fruit & veg
+    assert department_for("mela") == "frutta_verdura"
+    assert department_for("pomodoro") == "frutta_verdura"
+    assert department_for("basilico") == "frutta_verdura"
+    # Bread
+    assert department_for("pane") == "panetteria"
+    assert department_for("focaccia") == "panetteria"
+    # Pasta / rice
+    assert department_for("pasta") == "pasta_riso"
+    assert department_for("riso") == "pasta_riso"
+    assert department_for("farina") == "pasta_riso"
+    # Dairy & eggs
+    assert department_for("latte") == "latticini_uova"
+    assert department_for("parmigiano") == "latticini_uova"
+    assert department_for("uova") == "latticini_uova"
+    # Salumi vs carne
+    assert department_for("prosciutto") == "salumi"
+    assert department_for("salame") == "salumi"
+    assert department_for("pollo") == "carne"
+    assert department_for("bistecca") == "carne"
+    # Fish
+    assert department_for("tonno") == "pesce"
+    assert department_for("gamberetti") == "pesce"
+    # Condimenti
+    assert department_for("olio d'oliva") == "condimenti"
+    assert department_for("sale") == "condimenti"
+    assert department_for("pesto") == "condimenti"
+    # Beverages
+    assert department_for("vino") == "bevande"
+    assert department_for("caffè") == "bevande"
+    # Sweets
+    assert department_for("cioccolato") == "dolci"
+    assert department_for("miele") == "dolci"
+    # Canned / legumes
+    assert department_for("fagioli") == "scatolame"
+    assert department_for("noci") == "scatolame"
+    # Household
+    assert department_for("detersivo piatti") == "pulizia"
+    assert department_for("carta igienica") == "pulizia"
+
+
+def test_department_for_unknown_returns_altro():
+    assert department_for("boh") == "altro"
+    assert department_for("") == "altro"
+    assert department_for(None) == "altro"
+
+
+def test_department_order_is_supermarket_flow():
+    # First should be produce; last two should be pulizia + altro.
+    assert DEPARTMENTS[0] == "frutta_verdura"
+    assert DEPARTMENTS[-2:] == ["pulizia", "altro"]
+    # Every department id has a label.
+    for d in DEPARTMENTS:
+        assert d in DEPARTMENT_LABELS and DEPARTMENT_LABELS[d]

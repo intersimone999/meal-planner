@@ -5,6 +5,8 @@ from sqlalchemy.orm import Session
 
 from app.aggregator import derived_for_week
 from app.deps import get_session, templates
+from app.i18n import format_day_month
+from app.ingredient_emoji import DEPARTMENTS, department_for
 from app.models import Ingredient, ManualShoppingItem, ShoppingCheck
 from app.weekutil import (
     current_iso_year_week,
@@ -13,9 +15,19 @@ from app.weekutil import (
     week_delta,
     week_relative_label,
 )
-from app.i18n import format_day_month
 
 router = APIRouter(prefix="/shopping", tags=["shopping"])
+
+
+def _group_by_dept(items, name_getter, checked_getter):
+    """Group items into DEPARTMENTS-ordered dict; drop empty depts.
+    Within each dept, unchecked items come first, both alphabetical."""
+    buckets: dict[str, list] = {d: [] for d in DEPARTMENTS}
+    for it in items:
+        buckets[department_for(name_getter(it))].append(it)
+    for d in buckets:
+        buckets[d].sort(key=lambda x: (checked_getter(x), name_getter(x).lower()))
+    return {d: v for d, v in buckets.items() if v}
 
 
 @router.get("", response_class=HTMLResponse)
@@ -31,13 +43,20 @@ def show_list(
     week: int,
     session: Session = Depends(get_session),
 ):
-    derived = derived_for_week(session, year, week)
-    manual = session.scalars(
-        select(ManualShoppingItem).order_by(
-            ManualShoppingItem.checked,
-            ManualShoppingItem.created_at,
-        )
-    ).all()
+    derived_flat = derived_for_week(session, year, week)
+    manual_flat = session.scalars(select(ManualShoppingItem)).all()
+
+    derived_by_dept = _group_by_dept(
+        derived_flat,
+        name_getter=lambda t: t[0].name,       # t = (Ingredient, checked)
+        checked_getter=lambda t: t[1],
+    )
+    manual_by_dept = _group_by_dept(
+        manual_flat,
+        name_getter=lambda i: i.name,
+        checked_getter=lambda i: i.checked,
+    )
+
     dates = iso_week_dates(year, week)
     prev_y, prev_w = shift_iso_week(year, week, -1)
     next_y, next_w = shift_iso_week(year, week, +1)
@@ -47,8 +66,10 @@ def show_list(
         {
             "year": year,
             "week": week,
-            "derived": derived,
-            "manual": manual,
+            "derived_by_dept": derived_by_dept,
+            "manual_by_dept": manual_by_dept,
+            "any_derived": bool(derived_flat),
+            "any_manual": bool(manual_flat),
             "date_range": f"{format_day_month(dates[0])} – {format_day_month(dates[6])}",
             "prev_year": prev_y,
             "prev_week": prev_w,
@@ -111,6 +132,10 @@ def add_manual(
     item = ManualShoppingItem(name=name)
     session.add(item)
     session.commit()
+    # NOTE: the newly-added row is returned as a standalone <li> that HTMX
+    # appends to #manual-flat-list. The user needs to reload the page to see
+    # it grouped into the right department. Trade-off: incremental append
+    # is trivial; live regrouping would require a full-section re-render.
     return templates.TemplateResponse(
         request, "shopping/_manual_row.html", {"item": item}
     )

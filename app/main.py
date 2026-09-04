@@ -55,10 +55,16 @@ templates.env.globals["is_auth_bypassed"] = is_auth_bypassed
 
 # Presentation helpers — templates call these directly.
 from app.i18n import RECIPE_TYPE_EMOJIS, RECIPE_TYPE_LABELS  # noqa: E402
-from app.ingredient_emoji import emoji_for as _ing_emoji  # noqa: E402
+from app.ingredient_emoji import (  # noqa: E402
+    DEPARTMENT_EMOJIS,
+    DEPARTMENT_LABELS,
+    emoji_for as _ing_emoji,
+)
 templates.env.globals["type_label"] = lambda t: RECIPE_TYPE_LABELS.get(t, t)
 templates.env.globals["type_emoji"] = lambda t: RECIPE_TYPE_EMOJIS.get(t, "")
 templates.env.globals["ing_emoji"] = _ing_emoji
+templates.env.globals["dept_label"] = lambda d: DEPARTMENT_LABELS.get(d, d)
+templates.env.globals["dept_emoji"] = lambda d: DEPARTMENT_EMOJIS.get(d, "")
 
 
 # Cache-busting query param for static assets: templates append ?v=<mtime>

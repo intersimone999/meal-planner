@@ -65,11 +65,26 @@ A personal, self-hosted webapp for weekly meal planning. It turns "cosa cucino q
   a) **Derived dal piano** — the distinct, sorted set of ingredient names appearing in any recipe planned for that week. **Each item has a checkbox.**
   b) **Voci manuali** — user-managed persistent items (name only, checkable), independent of any week. They persist across weeks.
 - **The two sections are never silently merged**, even if the same name appears in both. If "olio d'oliva" is a manual pantry item and also used by a planned recipe, it shows in both sections. The user reconciles intent, not the app.
+- **Grouped by supermarket department (within each section):** items in both sections are grouped into supermarket departments in a fixed store-flow order. Only departments that actually contain items are shown. The department for each name is derived from the same keyword table used to pick the emoji (`app/ingredient_emoji.py`); unknown items fall into **Altro**. Fixed order:
+  1. Frutta e verdura
+  2. Panetteria
+  3. Pasta e riso
+  4. Latticini e uova
+  5. Salumi
+  6. Carne
+  7. Pesce
+  8. Surgelati
+  9. Scatolame e conserve
+  10. Condimenti
+  11. Dolci
+  12. Bevande
+  13. Casa e pulizia
+  14. Altro
 - **Derived checkbox behavior:**
   - Check state is stored per `(year, week, ingredient)`, so each ISO week has its own set of checks.
   - "Auto de-select when a new week starts" is a natural consequence: viewing a new week shows a fresh, empty check state. There is no explicit reset job.
-  - Checked derived items sort to the bottom of the derived section and render grayed out / struck through, matching manual-item visuals.
-- **Manual items:** add (name only), toggle checked, delete. Checked manual items also sort to the bottom and gray out; they do **not** auto-reset (they persist as long as the user leaves them checked).
+  - Checked derived items sort to the bottom of their department block and render grayed out / struck through, matching manual-item visuals.
+- **Manual items:** add (name only), toggle checked, delete. Checked manual items sort to the bottom of their department block and gray out; they do **not** auto-reset.
 
 ### 3.6 Import and export
 

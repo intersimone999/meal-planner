@@ -593,6 +593,27 @@ a.dish-name:hover { text-decoration: underline; }
 .shopping-section.derived .section-badge { background: var(--accent-soft); color: var(--accent); }
 .shopping-section.manual .section-badge  { background: var(--warning-soft); color: var(--warning); }
 
+.dept-block { margin-top: 1rem; }
+.dept-block:first-of-type { margin-top: 0.5rem; }
+.dept-header {
+  display: flex; align-items: baseline; gap: 0.4rem;
+  margin: 0 0 0.15rem;
+  font-size: 0.85rem; font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase; letter-spacing: 0.03em;
+  padding-bottom: 0.25rem;
+  border-bottom: 1px solid var(--border);
+}
+.dept-header .dept-emoji { font-size: 1rem; }
+.dept-header .dept-count {
+  margin-left: auto;
+  color: var(--text-subtle);
+  font-weight: 500;
+  font-size: 0.75rem;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
 .item-list { list-style: none; padding: 0; margin: 0.5rem 0 0; }
 .item-list li {
   display: flex; align-items: center; gap: 0.65rem;

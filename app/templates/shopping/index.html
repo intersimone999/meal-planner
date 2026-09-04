@@ -15,13 +15,22 @@
 
     <section class="card shopping-section derived">
       <h2>Dal piano <span class="section-badge">auto</span></h2>
-      <p class="hint">Ingredienti delle ricette pianificate. Le spunte si azzerano ogni settimana.</p>
-      {% if derived %}
-        <ul id="derived-list" class="item-list">
-          {% for ing, checked in derived %}
-            {% include "shopping/_derived_row.html" with context %}
-          {% endfor %}
-        </ul>
+      <p class="hint">Ingredienti delle ricette pianificate, per reparto. Le spunte si azzerano ogni settimana.</p>
+      {% if any_derived %}
+        {% for dept, items in derived_by_dept.items() %}
+          <div class="dept-block">
+            <h3 class="dept-header">
+              <span class="dept-emoji">{{ dept_emoji(dept) }}</span>
+              <span>{{ dept_label(dept) }}</span>
+              <span class="dept-count">{{ items|length }}</span>
+            </h3>
+            <ul class="item-list">
+              {% for ing, checked in items %}
+                {% include "shopping/_derived_row.html" with context %}
+              {% endfor %}
+            </ul>
+          </div>
+        {% endfor %}
       {% else %}
         <div class="empty-state">
           <svg class="icon-lg"><use href="#i-calendar"/></svg>
@@ -35,10 +44,10 @@
 
     <section class="card shopping-section manual">
       <h2>Voci manuali <span class="section-badge">tu</span></h2>
-      <p class="hint">Elementi ricorrenti (dispensa, detersivi…). Non si azzerano da soli.</p>
+      <p class="hint">Elementi ricorrenti (dispensa, detersivi…). Non si azzerano da soli. Ricarica per vedere una nuova voce nel reparto giusto.</p>
 
       <form hx-post="/shopping/manual"
-            hx-target="#manual-list"
+            hx-target="#manual-flat-list"
             hx-swap="beforeend"
             hx-on::after-request="this.reset(); this.querySelector('input').focus();"
             class="add-row">
@@ -49,11 +58,26 @@
         </button>
       </form>
 
-      <ul id="manual-list" class="item-list">
-        {% for item in manual %}
-          {% include "shopping/_manual_row.html" with context %}
+      {# Newly added rows land in #manual-flat-list. On page reload they get
+         grouped into departments below. #}
+      <ul id="manual-flat-list" class="item-list"></ul>
+
+      {% if any_manual %}
+        {% for dept, items in manual_by_dept.items() %}
+          <div class="dept-block">
+            <h3 class="dept-header">
+              <span class="dept-emoji">{{ dept_emoji(dept) }}</span>
+              <span>{{ dept_label(dept) }}</span>
+              <span class="dept-count">{{ items|length }}</span>
+            </h3>
+            <ul class="item-list">
+              {% for item in items %}
+                {% include "shopping/_manual_row.html" with context %}
+              {% endfor %}
+            </ul>
+          </div>
         {% endfor %}
-      </ul>
+      {% endif %}
     </section>
 
   </div>
