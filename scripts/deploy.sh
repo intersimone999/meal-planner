@@ -56,9 +56,14 @@ echo "    https_only:  $HTTPS_ONLY"
 mkdir -p "$DATA_DIR"
 
 # ---- Build image if missing ---------------------------------------------
+# --network=host: use the host's DNS + networking for the build. Works
+# around the common "Temporary failure in name resolution" pip error on
+# Debian/Ubuntu where the Docker daemon's default DNS can't resolve
+# pypi.org. If your host DNS is broken too, fix that first
+# (or add "dns" to /etc/docker/daemon.json and restart dockerd).
 if ! docker image inspect "$IMAGE" >/dev/null 2>&1; then
     echo "==> Building $IMAGE from $REPO_ROOT"
-    docker build -t "$IMAGE" "$REPO_ROOT"
+    docker build --network=host -t "$IMAGE" "$REPO_ROOT"
 else
     echo "==> Image $IMAGE already present (skip build; delete + rerun to rebuild)."
 fi
