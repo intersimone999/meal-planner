@@ -461,13 +461,14 @@ table.planner {
 table.planner th.day-col,
 table.planner td.day-col { width: 4rem; padding-left: 0.35rem; padding-right: 0.35rem; }
 table.planner .day-col {
-  display: flex; flex-direction: column; gap: 0.1rem;
   text-transform: none; letter-spacing: 0; color: var(--text);
   font-size: 0.95rem; font-weight: 600;
   background: transparent;
+  line-height: 1.15;
+  text-align: center;
 }
-table.planner .day-name { font-weight: 700; }
-table.planner .day-date { color: var(--text-muted); font-size: 0.75rem; font-weight: 400; }
+table.planner .day-name { display: block; font-weight: 700; }
+table.planner .day-date { display: block; color: var(--text-muted); font-size: 0.72rem; font-weight: 400; }
 
 td.cell {
   min-height: 3.5rem;
