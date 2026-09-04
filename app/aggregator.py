@@ -1,4 +1,4 @@
-"""Pure aggregation logic for the shopping list.
+"""Pure aggregation logic for the unified shopping list (SPEC.md §3.5).
 
 Kept separate from the route module so it is trivially unit-testable.
 """
@@ -6,37 +6,55 @@ Kept separate from the route module so it is trivially unit-testable.
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.models import Ingredient, PlannedMeal, RecipeIngredient, ShoppingCheck
+from app.models import (
+    Ingredient,
+    PantryItem,
+    PlannedMeal,
+    RecipeIngredient,
+    ShoppingCheck,
+)
 
 
-def derived_for_week(
+def shopping_list_for_week(
     session: Session, year: int, week: int
-) -> list[tuple[Ingredient, bool]]:
-    """Return the derived shopping list for the given ISO year+week.
+) -> list[tuple[str, bool]]:
+    """Return the unified shopping list for the given ISO year+week.
 
-    Each entry is (Ingredient, is_checked). Unchecked items come first
-    (alphabetical), then checked items (alphabetical). "Checked" state
-    is scoped to (year, week) via the ShoppingCheck table, so a new
-    week naturally shows every item unchecked.
+    Union of (recipe ingredients planned for the week) + (all pantry items),
+    deduped by lowercased name, sorted alphabetically. Each entry is
+    (display_name, is_checked). Check state comes from ShoppingCheck rows
+    keyed on (year, week, name); the auto-reset on a new week falls out of
+    the schema.
     """
-    ingredients_stmt = (
-        select(Ingredient)
-        .join(RecipeIngredient, RecipeIngredient.ingredient_id == Ingredient.id)
-        .join(PlannedMeal, PlannedMeal.recipe_id == RecipeIngredient.recipe_id)
-        .where(PlannedMeal.year == year, PlannedMeal.week == week)
-        .distinct()
-        .order_by(Ingredient.name)
-    )
-    ingredients = list(session.scalars(ingredients_stmt).all())
-
-    checked_ids = set(
+    derived_names = list(
         session.scalars(
-            select(ShoppingCheck.ingredient_id).where(
+            select(Ingredient.name)
+            .join(RecipeIngredient, RecipeIngredient.ingredient_id == Ingredient.id)
+            .join(PlannedMeal, PlannedMeal.recipe_id == RecipeIngredient.recipe_id)
+            .where(PlannedMeal.year == year, PlannedMeal.week == week)
+            .distinct()
+        ).all()
+    )
+    pantry_names = list(
+        session.scalars(select(PantryItem.name).order_by(PantryItem.name)).all()
+    )
+
+    # Dedup case-insensitive; keep the first-seen original casing.
+    seen: dict[str, str] = {}
+    for name in derived_names + pantry_names:
+        key = name.lower()
+        if key not in seen:
+            seen[key] = name
+
+    display_names = sorted(seen.values(), key=str.lower)
+
+    checked_names_lc = {
+        c.lower()
+        for c in session.scalars(
+            select(ShoppingCheck.name).where(
                 ShoppingCheck.year == year, ShoppingCheck.week == week
             )
         ).all()
-    )
+    }
 
-    unchecked = [(i, False) for i in ingredients if i.id not in checked_ids]
-    checked = [(i, True) for i in ingredients if i.id in checked_ids]
-    return unchecked + checked
+    return [(n, n.lower() in checked_names_lc) for n in display_names]

@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}Dispensa — Meal Planner{% endblock %}
+{% block content %}
+  <div class="page-header">
+    <h1>Dispensa</h1>
+  </div>
+
+  <p class="hint">Voci ricorrenti che vuoi trovare sempre nella lista della spesa (caffè, detersivo, carta igienica…). Non si spuntano qui: compaiono automaticamente su <a href="/shopping">Spesa</a>, dove si spuntano settimana per settimana.</p>
+
+  {% if error %}<div class="error">{{ error }}</div>{% endif %}
+
+  <div class="card">
+    <form method="post" action="/pantry" class="add-row">
+      <input type="text" name="name" required maxlength="200" autofocus
+             placeholder="Aggiungi una voce e premi Invio" autocomplete="off">
+      <button type="submit" class="button primary">
+        <svg class="icon"><use href="#i-plus"/></svg> Aggiungi
+      </button>
+    </form>
+  </div>
+
+  {% if items %}
+    <table>
+      <thead><tr><th>Nome</th><th style="width:8rem">Elimina</th></tr></thead>
+      <tbody>
+        {% for item in items %}
+          <tr>
+            <td>
+              <form method="post" action="/pantry/{{ item.id }}/rename" class="inline-form">
+                {% set e = ing_emoji(item.name) %}
+                {% if e %}<span aria-hidden="true">{{ e }}</span>{% endif %}
+                <input type="text" name="name" value="{{ item.name }}" required maxlength="200">
+                <button type="submit" class="button">Rinomina</button>
+              </form>
+            </td>
+            <td>
+              <form method="post" action="/pantry/{{ item.id }}/delete" class="inline-form"
+                    onsubmit="return confirm('Eliminare «{{ item.name }}»?');">
+                <button type="submit" class="button danger icon-only" title="Elimina">
+                  <svg class="icon"><use href="#i-x"/></svg>
+                </button>
+              </form>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <div class="card">
+      <div class="empty-state">
+        <svg class="icon-lg"><use href="#i-list"/></svg>
+        <p>Nessuna voce in dispensa. Aggiungine una qui sopra per farla comparire ogni settimana sulla lista della spesa.</p>
+      </div>
+    </div>
+  {% endif %}
+{% endblock %}

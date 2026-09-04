@@ -13,7 +13,7 @@ from app.db import init_db
 from app.deps import get_session, templates
 from app.i18n import DAY_NAMES_LONG, SLOTS, SLOT_LABELS, format_day_month
 from app.models import PlannedMeal, Recipe
-from app.routes import auth, ingredients, mealplans, planner, portability, recipes, shopping
+from app.routes import auth, ingredients, mealplans, pantry, planner, portability, recipes, shopping
 from app.security import (
     AuthMiddleware,
     HTTPS_ONLY,
@@ -89,6 +89,7 @@ app.include_router(ingredients.router)
 app.include_router(planner.router)
 app.include_router(mealplans.router)
 app.include_router(shopping.router)
+app.include_router(pantry.router)
 app.include_router(portability.router)
 
 

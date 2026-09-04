@@ -1,0 +1,15 @@
+{# Single unified shopping-list row. Requires: year, week, name, checked. #}
+<li class="{% if checked %}checked{% endif %}">
+  <form hx-post="/shopping/{{ year }}/{{ week }}/toggle"
+        hx-target="closest li"
+        hx-swap="outerHTML"
+        style="display:contents">
+    <input type="hidden" name="name" value="{{ name }}">
+    <button type="submit" class="check-btn"
+            title="{% if checked %}Segna come da comprare{% else %}Segna come preso{% endif %}">
+      <svg class="icon"><use href="#i-check"/></svg>
+    </button>
+  </form>
+  {% set e = ing_emoji(name) %}
+  <span class="name">{% if e %}{{ e }} {% endif %}{{ name }}</span>
+</li>

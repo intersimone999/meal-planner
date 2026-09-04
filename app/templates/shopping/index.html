@@ -11,74 +11,38 @@
     <a class="button" href="/shopping/{{ next_year }}/{{ next_week }}" title="Settimana successiva">›</a>
   </div>
 
-  <div class="shopping-grid">
+  <section class="card">
+    <h2>Lista della spesa</h2>
+    <p class="hint">Ricette pianificate + dispensa, unificate e divise per reparto. Le spunte si azzerano ogni settimana.</p>
 
-    <section class="card shopping-section derived">
-      <h2>Dal piano <span class="section-badge">auto</span></h2>
-      <p class="hint">Ingredienti delle ricette pianificate, per reparto. Le spunte si azzerano ogni settimana.</p>
-      {% if any_derived %}
-        {% for dept, items in derived_by_dept.items() %}
-          <div class="dept-block">
-            <h3 class="dept-header">
-              <span class="dept-emoji">{{ dept_emoji(dept) }}</span>
-              <span>{{ dept_label(dept) }}</span>
-              <span class="dept-count">{{ items|length }}</span>
-            </h3>
-            <ul class="item-list">
-              {% for ing, checked in items %}
-                {% include "shopping/_derived_row.html" with context %}
-              {% endfor %}
-            </ul>
-          </div>
-        {% endfor %}
-      {% else %}
-        <div class="empty-state">
-          <svg class="icon-lg"><use href="#i-calendar"/></svg>
-          <p>Nessuna ricetta pianificata per questa settimana.</p>
+    {% if any_items %}
+      {% for dept, items in items_by_dept.items() %}
+        <div class="dept-block">
+          <h3 class="dept-header">
+            <span class="dept-emoji">{{ dept_emoji(dept) }}</span>
+            <span>{{ dept_label(dept) }}</span>
+            <span class="dept-count">{{ items|length }}</span>
+          </h3>
+          <ul class="item-list">
+            {% for name, checked in items %}
+              {% include "shopping/_row.html" with context %}
+            {% endfor %}
+          </ul>
+        </div>
+      {% endfor %}
+    {% else %}
+      <div class="empty-state">
+        <svg class="icon-lg"><use href="#i-cart"/></svg>
+        <p>Nulla da comprare. Pianifica qualche ricetta o aggiungi voci in dispensa.</p>
+        <div style="display:flex;gap:0.5rem;justify-content:center;flex-wrap:wrap">
           <a class="button" href="/planner/{{ year }}/{{ week }}">
-            <svg class="icon"><use href="#i-arrow-right"/></svg> Vai al piano
+            <svg class="icon"><use href="#i-calendar"/></svg> Piano
+          </a>
+          <a class="button" href="/pantry">
+            <svg class="icon"><use href="#i-list"/></svg> Dispensa
           </a>
         </div>
-      {% endif %}
-    </section>
-
-    <section class="card shopping-section manual">
-      <h2>Voci manuali <span class="section-badge">tu</span></h2>
-      <p class="hint">Elementi ricorrenti (dispensa, detersivi…). Non si azzerano da soli. Ricarica per vedere una nuova voce nel reparto giusto.</p>
-
-      <form hx-post="/shopping/manual"
-            hx-target="#manual-flat-list"
-            hx-swap="beforeend"
-            hx-on::after-request="this.reset(); this.querySelector('input').focus();"
-            class="add-row">
-        <input type="text" name="name" required maxlength="200"
-               placeholder="Aggiungi una voce e premi Invio" autocomplete="off">
-        <button type="submit" class="button">
-          <svg class="icon"><use href="#i-plus"/></svg>
-        </button>
-      </form>
-
-      {# Newly added rows land in #manual-flat-list. On page reload they get
-         grouped into departments below. #}
-      <ul id="manual-flat-list" class="item-list"></ul>
-
-      {% if any_manual %}
-        {% for dept, items in manual_by_dept.items() %}
-          <div class="dept-block">
-            <h3 class="dept-header">
-              <span class="dept-emoji">{{ dept_emoji(dept) }}</span>
-              <span>{{ dept_label(dept) }}</span>
-              <span class="dept-count">{{ items|length }}</span>
-            </h3>
-            <ul class="item-list">
-              {% for item in items %}
-                {% include "shopping/_manual_row.html" with context %}
-              {% endfor %}
-            </ul>
-          </div>
-        {% endfor %}
-      {% endif %}
-    </section>
-
-  </div>
+      </div>
+    {% endif %}
+  </section>
 {% endblock %}

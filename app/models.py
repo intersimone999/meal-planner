@@ -114,30 +114,33 @@ class TemplateSlot(Base):
     recipe: Mapped[Recipe] = relationship(back_populates="template_slots")
 
 
-class ManualShoppingItem(Base):
-    __tablename__ = "manual_shopping_items"
+class PantryItem(Base):
+    """User-managed recurring shopping name (§3.6). Every pantry item appears
+    on the unified shopping list; no per-item check state (that lives in
+    ShoppingCheck, per week)."""
+
+    __tablename__ = "pantry_items"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    name: Mapped[str] = mapped_column(String(200))
-    checked: Mapped[bool] = mapped_column(default=False)
+    name: Mapped[str] = mapped_column(NoCaseString(200), unique=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime, server_default=func.now()
     )
 
 
 class ShoppingCheck(Base):
-    """Per-week check state for a derived shopping-list ingredient.
+    """Per-week check state for a shopping-list item, keyed by NAME.
 
-    The (year, week) scoping is what gives 'auto-reset on new week' behavior
-    for free — viewing a different week yields a different set of rows.
+    Name-based so a single row covers both derived ingredients (from planned
+    meals) and pantry items uniformly — matching the deduped, unified view
+    in §3.5. The (year, week) scoping is what gives 'auto-reset on new week'
+    behavior for free.
     """
 
     __tablename__ = "shopping_checks"
-    __table_args__ = (UniqueConstraint("year", "week", "ingredient_id"),)
+    __table_args__ = (UniqueConstraint("year", "week", "name"),)
 
     id: Mapped[int] = mapped_column(primary_key=True)
     year: Mapped[int]
     week: Mapped[int]
-    ingredient_id: Mapped[int] = mapped_column(
-        ForeignKey("ingredients.id", ondelete="CASCADE")
-    )
+    name: Mapped[str] = mapped_column(NoCaseString(200))

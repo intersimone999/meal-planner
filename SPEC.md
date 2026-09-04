@@ -58,14 +58,15 @@ A personal, self-hosted webapp for weekly meal planning. It turns "cosa cucino q
 - Template editing UI mirrors the planner grid but is week-agnostic.
 - Deleting a recipe cascades to `TemplateSlot` rows the same way it cascades to `PlannedMeal` rows.
 
-### 3.5 Shopping list
+### 3.5 Shopping list (supermarket view)
 
 - URL: `/shopping/{year}/{week}` (root `/shopping` redirects to the current week).
-- Two clearly separated sections:
-  a) **Derived dal piano** — the distinct, sorted set of ingredient names appearing in any recipe planned for that week. **Each item has a checkbox.**
-  b) **Voci manuali** — user-managed persistent items (name only, checkable), independent of any week. They persist across weeks.
-- **The two sections are never silently merged**, even if the same name appears in both. If "olio d'oliva" is a manual pantry item and also used by a planned recipe, it shows in both sections. The user reconciles intent, not the app.
-- **Grouped by supermarket department (within each section):** items in both sections are grouped into supermarket departments in a fixed store-flow order. Only departments that actually contain items are shown. The department for each name is derived from the same keyword table used to pick the emoji (`app/ingredient_emoji.py`); unknown items fall into **Altro**. Fixed order:
+- **Purpose:** a single unified list of everything to buy for the week, meant to be used at the supermarket. Read-only apart from the checkboxes.
+- **Content:** the union of
+  a) distinct ingredient names appearing in any recipe planned for that week (§3.3), and
+  b) every entry from the pantry (§3.6).
+  Deduplicated by name (case-insensitive) — an item present in both sources shows up **once**.
+- **Grouped by supermarket department** in the fixed store-flow order below. Only departments with at least one item are shown. Department per name comes from the keyword table in `app/ingredient_emoji.py`; unknowns fall into **Altro**. Fixed order:
   1. Frutta e verdura
   2. Panetteria
   3. Pasta e riso
@@ -80,13 +81,20 @@ A personal, self-hosted webapp for weekly meal planning. It turns "cosa cucino q
   12. Bevande
   13. Casa e pulizia
   14. Altro
-- **Derived checkbox behavior:**
-  - Check state is stored per `(year, week, ingredient)`, so each ISO week has its own set of checks.
-  - "Auto de-select when a new week starts" is a natural consequence: viewing a new week shows a fresh, empty check state. There is no explicit reset job.
-  - Checked derived items sort to the bottom of their department block and render grayed out / struck through, matching manual-item visuals.
-- **Manual items:** add (name only), toggle checked, delete. Checked manual items sort to the bottom of their department block and gray out; they do **not** auto-reset.
+- **Checkbox behavior:**
+  - Each item has one checkbox. Check state is scoped by `(year, week, name)` — a new ISO week naturally shows every item unchecked (auto-reset by design; no cron).
+  - Checked items sort to the bottom of their department block and render grayed out / struck through.
+- **Nothing else:** the page does **not** allow adding items, removing items, or editing anything. Adding recurring pantry items happens in §3.6; ingredient-name typos are fixed by editing the recipe (§3.1).
 
-### 3.6 Import and export
+### 3.6 Pantry (voci manuali)
+
+- URL: `/pantry`.
+- Flat, week-independent list of recurring names the user always wants on the shopping list — e.g. `caffè`, `detersivo piatti`, `carta igienica`.
+- Actions: **add** (name only), **rename**, **delete**. **No check state, no department grouping** — this page is just for management, not for shopping.
+- Names are case-insensitive-unique across the pantry (`caffè` and `Caffè` are the same entry).
+- Every pantry name automatically appears in the shopping list (§3.5), grouped into the department its keywords match.
+
+### 3.7 Import and export
 
 - **Dedicated import page** at `/import` with a file upload form. Shows a per-import result summary (created / skipped / errored counts by entity type).
 - **Export** `GET /export`: downloads a JSON file. Format:
@@ -166,8 +174,8 @@ A personal, self-hosted webapp for weekly meal planning. It turns "cosa cucino q
 - **PlannedMeal**(`id`, `year`, `week`, `day` 0–6, `slot` IN {lunch, dinner}, `recipe_id` FK→Recipe) — UNIQUE(`year`, `week`, `day`, `slot`, `recipe_id`) — a cell can hold multiple recipes; only duplicates of the same recipe in the same cell are blocked.
 - **MealPlanTemplate**(`id`, `name` UNIQUE CI)
 - **TemplateSlot**(`id`, `template_id` FK→MealPlanTemplate, `day` 0–6, `slot` IN {lunch, dinner}, `recipe_id` FK→Recipe) — UNIQUE(`template_id`, `day`, `slot`, `recipe_id`) — same reasoning as `PlannedMeal`.
-- **ManualShoppingItem**(`id`, `name`, `checked` BOOL, `created_at`)
-- **ShoppingCheck**(`id`, `year`, `week`, `ingredient_id` FK→Ingredient) — UNIQUE(`year`, `week`, `ingredient_id`). Presence of a row means the corresponding derived ingredient is checked for that week. Auto-scoped: viewing a different week shows a different set of checks.
+- **PantryItem**(`id`, `name` UNIQUE CI, `created_at`) — user-managed recurring shopping names (§3.6). No check state (checks live in `ShoppingCheck`, per week).
+- **ShoppingCheck**(`id`, `year`, `week`, `name` NoCaseString) — UNIQUE(`year`, `week`, `name`). Presence = the item with that name is checked for that week. Keyed by **name**, not by any FK, so it works for both derived ingredients and pantry items uniformly. Auto-scoped: viewing a different week shows a different set of checks.
 
 Cascading deletes: deleting a `Recipe` removes its `RecipeIngredient`, `PlannedMeal`, and `TemplateSlot` rows. Deleting a `MealPlanTemplate` removes its `TemplateSlot` rows. Deleting an `Ingredient` removes matching `ShoppingCheck` rows (rare, since delete is blocked while in use by recipes).
 
@@ -193,7 +201,7 @@ Explicit non-goals — do **not** add these without updating the spec first:
 ## 7. Acceptance criteria
 
 1. **Recipe entry friction test:** creating a new recipe with 5 new-to-the-system ingredients takes ≤ 30 seconds and never blocks on a modal.
-2. **End-to-end plan → shopping:** create 3 recipes with overlapping ingredients → plan them across Mon/Wed/Fri dinner of the current week → `/shopping` derived section shows the union of their ingredients, deduped and sorted, each with an unchecked checkbox. Add a manual item "detersivo piatti" → it appears only in the manual section. Check one derived item → it grays out and sinks to the bottom of its section; navigating to next week shows all derived items unchecked again.
+2. **End-to-end plan → shopping:** create 3 recipes with overlapping ingredients → plan them across Mon/Wed/Fri dinner of the current week → `/shopping` shows the union of their ingredients, deduped, grouped by department, each with an unchecked checkbox, no add form. Add a pantry item "detersivo piatti" from `/pantry` → it also appears on `/shopping` in the Casa e pulizia department. Check one item → it grays out and sinks to the bottom of its department; navigating to next week shows every item unchecked again.
 3. **Container persistence:** `docker run` with a mounted `/data` volume; create a recipe; restart the container; recipe is still there.
 4. **Login:** with `MENUAPP_USER`/`MENUAPP_PASSWORD` set, visiting any protected page redirects to `/login`; correct credentials log you in and return you to the original page; `/healthz` is reachable without login; session survives a browser restart within 30 days.
 5. **Import/export round-trip:** export → wipe DB → import via the `/import` upload page → recipes, ingredients, and templates are identical (order-insensitive). Importing a template whose recipes are missing succeeds and reports the orphaned slots on the summary.

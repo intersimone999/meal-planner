@@ -174,17 +174,16 @@ def test_invalid_rows_counted_not_fatal(session):
 
 
 def test_export_excludes_ephemeral_state(session):
-    from app.models import ManualShoppingItem, PlannedMeal, ShoppingCheck
+    from app.models import PantryItem, PlannedMeal, ShoppingCheck
 
     _seed(session)
     r = session.query(Recipe).filter_by(name="Pasta al pesto").one()
-    ing = session.query(Ingredient).filter_by(name="pasta").one()
     session.add(PlannedMeal(year=2026, week=36, day=0, slot="lunch", recipe_id=r.id))
-    session.add(ManualShoppingItem(name="detersivo"))
-    session.add(ShoppingCheck(year=2026, week=36, ingredient_id=ing.id))
+    session.add(PantryItem(name="detersivo"))
+    session.add(ShoppingCheck(year=2026, week=36, name="pasta"))
     session.commit()
 
     data = export_all(session)
     blob = json.dumps(data)
     assert "planned_meals" not in blob and "detersivo" not in blob
-    assert "shopping_checks" not in blob
+    assert "shopping_checks" not in blob and "pantry_items" not in blob

@@ -25,10 +25,9 @@ Self-hosted webapp for personal meal planning. Core capabilities:
 1. **Recipe library** — name + **required type** (fixed enum: antipasto/primo/secondo/contorno/frutta/dolce/altro) + optional notes + a **set of ingredient names**. No quantities, no units.
 2. **Weekly planner** — recipes assigned to fixed slots **{lunch, dinner}** on an ISO year+week grid (no breakfast). Each cell can hold **multiple recipes** — natural for the Italian multi-course meal. The same recipe cannot appear twice in one cell.
 3. **Reusable weekly templates** — named plans that can be applied to a specific week; applying **only fills fully empty cells** (no partial merge), never overwrites.
-4. **Shopping list** — two independent sections shown together:
-   - **Derived** from the plan, each item with a checkbox scoped to `(year, week)`. New week ⇒ fresh empty check state (auto-reset by design).
-   - **Manual** pantry list, persistent, independent of any week.
-5. **Import page + export** for recipes, ingredients, and templates as JSON.
+4. **Shopping list (`/shopping/{year}/{week}`)** — unified read-view meant for the supermarket. Union of (recipes planned for the week) + (all pantry items), deduped by name, grouped by supermarket department. Only interaction: per-week checkboxes (auto-reset on new week).
+5. **Pantry (`/pantry`)** — flat management page for recurring items (`caffè`, `detersivo`, …). Add/rename/delete only. No check state, no dept grouping here — this is just where entries are managed.
+6. **Import page + export** for recipes, ingredients, and templates as JSON. Pantry items and shopping checks are ephemeral and not exported.
 
 All user-facing text is **Italian**. Code, comments, and log messages stay in English.
 
@@ -65,10 +64,10 @@ Docker:
 - `RecipeIngredient` — join table (recipe_id, ingredient_id). No quantity, no unit. Unique per (recipe, ingredient).
 - `PlannedMeal` — (year, week, day, slot, recipe). Unique per (year, week, day, slot, **recipe_id**) — one cell holds many recipes, only same-recipe duplication is blocked.
 - `MealPlanTemplate` + `TemplateSlot` — same shape as `PlannedMeal` but without (year, week). Templates get "applied" to a week and fill only **fully empty** cells (skip cell if any dish is already there).
-- `ManualShoppingItem` — persistent pantry item (name, checked flag). Not tied to any week.
-- `ShoppingCheck` — (year, week, ingredient_id). Presence of a row = that derived ingredient is checked for that week. Per-week scoping is what gives the "auto-reset on new week" behavior for free.
+- `PantryItem` — persistent recurring shopping name. Just (id, name, created_at); no check state.
+- `ShoppingCheck` — (year, week, name). **Keyed by name**, not by FK — so a check works uniformly for derived ingredient names and pantry names. Per-week scoping gives "auto-reset on new week" for free.
 
-**Never merge** the derived and manual shopping sections. See SPEC.md §3.5.
+The `/shopping/{y}/{w}` view unifies derived + pantry names (deduped case-insensitive) and looks up checks by name. There is no split-in-two shopping page anymore.
 
 ### Auth (see SPEC.md §4.2)
 
@@ -92,10 +91,14 @@ Routes should return full HTML pages for direct navigation and HTML **fragments*
 ### Data flow for the shopping list (reference)
 
 `GET /shopping/{year}/{week}` →
-- **Derived section:** `SELECT DISTINCT ingredient.id, ingredient.name FROM planned_meals JOIN recipe_ingredients ON ... JOIN ingredients ON ... WHERE year=? AND week=? ORDER BY ingredient.name`. Then LEFT JOIN `ShoppingCheck` on `(year, week, ingredient_id)` to determine each item's checkbox state. Sort checked items to the bottom in the template.
-- **Manual section:** load all `ManualShoppingItem` rows.
+1. `SELECT DISTINCT Ingredient.name FROM planned_meals JOIN recipe_ingredients ON ... JOIN ingredients ON ... WHERE year=? AND week=?`
+2. `SELECT PantryItem.name FROM pantry_items`
+3. Union both, dedup case-insensitive, `LEFT JOIN`-in-code with `ShoppingCheck` for `(year, week)` to compute per-name checked state.
+4. Group by department (`app/ingredient_emoji.department_for(name)`).
 
-Both rendered in `shopping/index.html` as two distinct sections. Toggling a derived checkbox is `POST /shopping/{year}/{week}/check/{ingredient_id}` (creates a `ShoppingCheck` row) / `DELETE ...` (removes it). Manual items use `POST/DELETE /shopping/manual/...` and only ever touch `ManualShoppingItem`.
+Toggle: `POST /shopping/{year}/{week}/toggle` with form field `name` → insert/delete a `ShoppingCheck` row keyed by `(year, week, name)`.
+
+Pantry CRUD lives entirely under `/pantry` (its own template + router).
 
 ### Template application (reference)
 

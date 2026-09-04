@@ -1,13 +1,14 @@
-"""Tests for the shopping-list aggregator (app/aggregator.py).
+"""Tests for the unified shopping-list aggregator (app/aggregator.py).
 
-The aggregator is the load-bearing piece of the shopping-list feature —
-per SPEC.md §3.5, its behaviour under dedup and per-week check isolation
-is the entire acceptance criterion for the feature.
+Per SPEC.md §3.5, the shopping list is the union of (planned ingredients)
++ (pantry items), deduped case-insensitively, with per-(year, week, name)
+check state via the ShoppingCheck table.
 """
 
-from app.aggregator import derived_for_week
+from app.aggregator import shopping_list_for_week
 from app.models import (
     Ingredient,
+    PantryItem,
     PlannedMeal,
     Recipe,
     RecipeIngredient,
@@ -37,71 +38,74 @@ def _plan(session, year, week, day, slot, recipe):
     session.flush()
 
 
-def test_empty_week_returns_empty(session):
-    assert derived_for_week(session, 2026, 36) == []
+def test_empty_week_no_pantry_returns_empty(session):
+    assert shopping_list_for_week(session, 2026, 36) == []
 
 
-def test_single_meal_returns_its_ingredients_sorted(session):
-    r = _add_recipe(session, "R1", ["pomodoro", "basilico", "aglio"])
+def test_only_pantry_items(session):
+    session.add_all([PantryItem(name="caffè"), PantryItem(name="sale")])
+    session.commit()
+    names = [n for n, _ in shopping_list_for_week(session, 2026, 36)]
+    assert names == ["caffè", "sale"]
+
+
+def test_single_planned_meal_returns_its_ingredients(session):
+    r = _add_recipe(session, "R", ["pomodoro", "basilico", "aglio"])
     _plan(session, 2026, 36, 0, "lunch", r)
-
-    result = derived_for_week(session, 2026, 36)
-    names = [i.name for i, checked in result]
+    names = [n for n, _ in shopping_list_for_week(session, 2026, 36)]
     assert names == ["aglio", "basilico", "pomodoro"]
-    assert all(checked is False for _, checked in result)
 
 
-def test_two_meals_share_ingredient_is_deduped(session):
-    r1 = _add_recipe(session, "Pasta", ["pasta", "pomodoro", "parmigiano"])
-    r2 = _add_recipe(session, "Bruschetta", ["pane", "pomodoro", "aglio"])
-    _plan(session, 2026, 36, 0, "lunch", r1)
-    _plan(session, 2026, 36, 2, "dinner", r2)
-
-    names = [i.name for i, _ in derived_for_week(session, 2026, 36)]
-    # union of both, deduped, sorted; pomodoro appears exactly once
-    assert names == ["aglio", "pane", "parmigiano", "pasta", "pomodoro"]
-    assert names.count("pomodoro") == 1
+def test_planned_and_pantry_union_and_dedup(session):
+    r = _add_recipe(session, "R", ["pomodoro", "olio"])
+    _plan(session, 2026, 36, 0, "lunch", r)
+    session.add_all([PantryItem(name="olio"), PantryItem(name="caffè")])
+    session.commit()
+    names = [n for n, _ in shopping_list_for_week(session, 2026, 36)]
+    # olio appears in both — deduped case-insensitively
+    assert names == ["caffè", "olio", "pomodoro"]
 
 
-def test_different_weeks_are_isolated(session):
+def test_dedup_is_case_insensitive(session):
+    r = _add_recipe(session, "R", ["Pomodoro"])
+    _plan(session, 2026, 36, 0, "lunch", r)
+    session.add(PantryItem(name="pomodoro"))
+    session.commit()
+    names = [n for n, _ in shopping_list_for_week(session, 2026, 36)]
+    assert len(names) == 1
+    # Preserves the first-seen casing (from the derived path in this fixture)
+    assert names[0] in ("Pomodoro", "pomodoro")
+
+
+def test_different_weeks_isolated(session):
     r = _add_recipe(session, "R", ["farina"])
     _plan(session, 2026, 36, 0, "lunch", r)
-
-    assert [i.name for i, _ in derived_for_week(session, 2026, 36)] == ["farina"]
-    assert derived_for_week(session, 2026, 37) == []
-    assert derived_for_week(session, 2025, 36) == []
+    assert [n for n, _ in shopping_list_for_week(session, 2026, 36)] == ["farina"]
+    assert shopping_list_for_week(session, 2026, 37) == []
 
 
-def test_check_state_is_per_week(session):
-    r = _add_recipe(session, "R", ["riso"])
-    _plan(session, 2026, 36, 0, "lunch", r)
-    _plan(session, 2026, 37, 0, "lunch", r)
-
-    riso_id = session.query(Ingredient).filter_by(name="riso").one().id
-    # Check on week 36
-    session.add(ShoppingCheck(year=2026, week=36, ingredient_id=riso_id))
+def test_pantry_present_across_weeks(session):
+    session.add(PantryItem(name="caffè"))
     session.commit()
-
-    w36 = derived_for_week(session, 2026, 36)
-    w37 = derived_for_week(session, 2026, 37)
-
-    assert [(i.name, c) for i, c in w36] == [("riso", True)]
-    # Week 37 must be UNAFFECTED
-    assert [(i.name, c) for i, c in w37] == [("riso", False)]
+    # Pantry is week-independent — shows on every week
+    for w in (35, 36, 37):
+        assert [n for n, _ in shopping_list_for_week(session, 2026, w)] == ["caffè"]
 
 
-def test_unchecked_items_come_before_checked(session):
-    r = _add_recipe(session, "R", ["banana", "avocado", "cetriolo"])
-    _plan(session, 2026, 36, 0, "lunch", r)
-
-    banana_id = session.query(Ingredient).filter_by(name="banana").one().id
-    session.add(ShoppingCheck(year=2026, week=36, ingredient_id=banana_id))
+def test_check_state_is_per_week_and_name(session):
+    session.add(PantryItem(name="caffè"))
     session.commit()
+    session.add(ShoppingCheck(year=2026, week=36, name="caffè"))
+    session.commit()
+    assert shopping_list_for_week(session, 2026, 36) == [("caffè", True)]
+    # Next week not affected
+    assert shopping_list_for_week(session, 2026, 37) == [("caffè", False)]
 
-    result = derived_for_week(session, 2026, 36)
-    # unchecked first (alpha), then checked (alpha)
-    assert [(i.name, c) for i, c in result] == [
-        ("avocado", False),
-        ("cetriolo", False),
-        ("banana", True),
-    ]
+
+def test_check_case_insensitive_lookup(session):
+    session.add(PantryItem(name="Caffè"))
+    session.commit()
+    # A ShoppingCheck stored with different casing should still match
+    session.add(ShoppingCheck(year=2026, week=36, name="CAFFÈ"))
+    session.commit()
+    assert shopping_list_for_week(session, 2026, 36) == [("Caffè", True)]
