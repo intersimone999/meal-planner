@@ -1,0 +1,47 @@
+# Meal Planner — docker-compose deployment.
+#
+# Reads variables from `.env` alongside this file.
+# Copy `.env.example` to `.env` and fill in the fundamentals (the two
+# `${VAR:?…}` refuse to start the stack if they're unset or empty).
+#
+# Usage:
+#   docker compose up -d --build     first time or after code changes
+#   docker compose up -d             after simple .env / compose changes
+#   docker compose logs -f           tail logs
+#   docker compose down              stop + remove container
+#   docker compose ps                see status + healthcheck
+
+services:
+  meal-planner:
+    build:
+      context: .
+      # --network=host so pip inside the build can resolve pypi.org.
+      # (Docker's default build network sometimes has broken DNS on
+      # Debian/Ubuntu.)
+      network: host
+    image: ${MEAL_PLANNER_IMAGE:-meal-planner:latest}
+    container_name: ${MEAL_PLANNER_CONTAINER:-meal-planner}
+    restart: unless-stopped
+    ports:
+      # Bind to 127.0.0.1 only — Apache proxies to it locally; the
+      # container isn't reachable from outside the host.
+      - "127.0.0.1:${MEAL_PLANNER_PORT:-8000}:8000"
+    volumes:
+      # Host dir → /data mount for the SQLite file. Default `./data`
+      # keeps things self-contained next to this compose file; on a
+      # deployment server prefer e.g. /var/lib/meal-planner via .env.
+      - "${MEAL_PLANNER_DATA_DIR:-./data}:/data"
+    environment:
+      MENUAPP_PASSWORD: "${MENUAPP_PASSWORD:?MENUAPP_PASSWORD must be set in .env (master password).}"
+      MENUAPP_SESSION_SECRET: "${MENUAPP_SESSION_SECRET:?MENUAPP_SESSION_SECRET must be set in .env (session signing key).}"
+      MENUAPP_HTTPS_ONLY: "${MENUAPP_HTTPS_ONLY:-false}"
+      # Set to an empty string in .env to serve at the origin root.
+      MENUAPP_ROOT_PATH: "${MENUAPP_ROOT_PATH-/meal-planner}"
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - python -c 'import urllib.request as u; u.urlopen("http://127.0.0.1:8000/healthz").read()'
+      interval: 15s
+      timeout: 3s
+      retries: 3
+      start_period: 5s

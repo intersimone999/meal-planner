@@ -132,9 +132,9 @@ A personal, self-hosted webapp for weekly meal planning. It turns "cosa cucino q
 - Single container image, single SQLite file mounted at `/data` via a host volume.
 - Database path from `MENUAPP_DB_PATH` (default `/data/menuapp.db` in-container; a local relative path for dev outside Docker).
 - Runs as a single `uvicorn` process. No workers, no external services.
-- **Turn-key deployment scripts** in `scripts/`:
-  - `scripts/deploy.sh` — builds the image (if missing) and (re)starts the Docker container. Refuses to run without `MENUAPP_PASSWORD` and `MENUAPP_SESSION_SECRET` set.
-  - `scripts/install-apache-config.sh` + `scripts/meal-planner.conf.template` — installs an Apache reverse-proxy config that mounts the app at `/meal-planner` on the machine's IP (no domain assumed). Renders port and root path from env into `/etc/apache2/sites-available/meal-planner.conf`, enables the required modules, reloads Apache.
+- **Turn-key deployment** via:
+  - `docker-compose.yml` at the repo root, reading `./​.env` (`.env.example` is committed as a template). Compose refuses to start if `MENUAPP_PASSWORD` or `MENUAPP_SESSION_SECRET` are empty.
+  - `scripts/install-apache-config.sh` + `scripts/meal-planner.conf.template` — installs an Apache reverse-proxy config that mounts the app at `/meal-planner` on the machine's IP (no domain assumed). Renders port and root path from env into `/etc/apache2/conf-available/meal-planner.conf`, enables the required modules, reloads Apache.
 - **Sub-path proxying** is supported natively via the `MENUAPP_ROOT_PATH` env var. When set, templates prefix all internal URLs with it and outgoing `Location` headers get the prefix (via `app/middleware.py`). Unset (dev) → transparent no-op.
 
 ### 4.2 Authentication
