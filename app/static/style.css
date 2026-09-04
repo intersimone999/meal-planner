@@ -409,6 +409,12 @@ tbody tr:hover td { background: var(--surface-alt); }
   letter-spacing: 0;
 }
 
+/* On narrow screens, put the title on its own row and let ‹ Oggi › share
+   the row below — otherwise the h1 elbows the buttons onto separate rows. */
+@media (max-width: 640px) {
+  .week-header h1 { flex-basis: 100%; order: -1; min-width: 0; }
+}
+
 table.planner {
   table-layout: fixed;
   overflow: visible;  /* let edit dropdowns escape */
