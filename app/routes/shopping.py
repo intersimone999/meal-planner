@@ -6,7 +6,13 @@ from sqlalchemy.orm import Session
 from app.aggregator import derived_for_week
 from app.deps import get_session, templates
 from app.models import Ingredient, ManualShoppingItem, ShoppingCheck
-from app.weekutil import current_iso_year_week, iso_week_dates, shift_iso_week
+from app.weekutil import (
+    current_iso_year_week,
+    iso_week_dates,
+    shift_iso_week,
+    week_delta,
+    week_relative_label,
+)
 from app.i18n import format_day_month
 
 router = APIRouter(prefix="/shopping", tags=["shopping"])
@@ -48,6 +54,7 @@ def show_list(
             "prev_week": prev_w,
             "next_year": next_y,
             "next_week": next_w,
+            "relative_label": week_relative_label(week_delta(year, week)),
         },
     )
 

@@ -3,7 +3,10 @@
 {% block content %}
   <div class="week-header">
     <a class="button" href="/shopping/{{ prev_year }}/{{ prev_week }}" title="Settimana precedente">‹</a>
-    <h1>Spesa · settimana {{ week }} · {{ date_range }} {{ year }}</h1>
+    <h1>
+      {{ relative_label }}
+      <span class="week-range">{{ date_range }} {{ year }}</span>
+    </h1>
     <a class="button" href="/shopping" title="Vai a questa settimana">Oggi</a>
     <a class="button" href="/shopping/{{ next_year }}/{{ next_week }}" title="Settimana successiva">›</a>
   </div>
