@@ -458,7 +458,8 @@ table.planner {
   table-layout: fixed;
   overflow: visible;  /* let edit dropdowns escape */
 }
-table.planner th.day-col { width: 6.5rem; }
+table.planner th.day-col,
+table.planner td.day-col { width: 4rem; padding-left: 0.35rem; padding-right: 0.35rem; }
 table.planner .day-col {
   display: flex; flex-direction: column; gap: 0.1rem;
   text-transform: none; letter-spacing: 0; color: var(--text);
