@@ -2,17 +2,17 @@
 {% block title %}Piano — settimana {{ week }}/{{ year }}{% endblock %}
 {% block content %}
   <div class="week-header">
-    <a class="button" href="/planner/{{ prev_year }}/{{ prev_week }}" title="Settimana precedente">‹</a>
+    <a class="button" href="{{ root_path }}/planner/{{ prev_year }}/{{ prev_week }}" title="Settimana precedente">‹</a>
     <h1>
       {{ relative_label }}
       <span class="week-range">{{ date_labels[0] }} – {{ date_labels[6] }} {{ year }}</span>
     </h1>
-    <a class="button" href="/planner" title="Vai a questa settimana">Oggi</a>
-    <a class="button" href="/planner/{{ next_year }}/{{ next_week }}" title="Settimana successiva">›</a>
+    <a class="button" href="{{ root_path }}/planner" title="Vai a questa settimana">Oggi</a>
+    <a class="button" href="{{ root_path }}/planner/{{ next_year }}/{{ next_week }}" title="Settimana successiva">›</a>
   </div>
 
   {% if mealplans %}
-    <form method="post" action="/planner/{{ year }}/{{ week }}/apply" class="apply-template">
+    <form method="post" action="{{ root_path }}/planner/{{ year }}/{{ week }}/apply" class="apply-template">
       <label for="template_id">Applica modello</label>
       <select name="template_id" id="template_id" required>
         <option value="">— scegli —</option>

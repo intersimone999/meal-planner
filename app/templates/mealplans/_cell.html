@@ -4,9 +4,9 @@
       {% for e in entries %}
         <li class="dish">
           <span class="dish-type type-{{ e.recipe.type }}" title="{{ type_label(e.recipe.type) }}"><span class="type-emoji">{{ type_emoji(e.recipe.type) }}</span><span class="type-label"> {{ type_label(e.recipe.type) }}</span></span>
-          <a class="dish-name" href="/recipes/{{ e.recipe.id }}/edit">{{ e.recipe.name }}</a>
+          <a class="dish-name" href="{{ root_path }}/recipes/{{ e.recipe.id }}/edit">{{ e.recipe.name }}</a>
           <button class="dish-remove"
-                  hx-delete="/mealplans/{{ template_id }}/cell/{{ day }}/{{ slot }}/{{ e.recipe_id }}"
+                  hx-delete="{{ root_path }}/mealplans/{{ template_id }}/cell/{{ day }}/{{ slot }}/{{ e.recipe_id }}"
                   hx-target="#tcell-{{ day }}-{{ slot }}"
                   hx-swap="outerHTML"
                   title="Rimuovi">
@@ -16,7 +16,7 @@
       {% endfor %}
     </ul>
     <button class="cell-add-more"
-            hx-get="/mealplans/{{ template_id }}/cell/{{ day }}/{{ slot }}/edit"
+            hx-get="{{ root_path }}/mealplans/{{ template_id }}/cell/{{ day }}/{{ slot }}/edit"
             hx-target="#tcell-{{ day }}-{{ slot }}"
             hx-swap="outerHTML"
             title="Aggiungi un altro piatto">
@@ -24,7 +24,7 @@
     </button>
   {% else %}
     <button class="cell-add"
-            hx-get="/mealplans/{{ template_id }}/cell/{{ day }}/{{ slot }}/edit"
+            hx-get="{{ root_path }}/mealplans/{{ template_id }}/cell/{{ day }}/{{ slot }}/edit"
             hx-target="#tcell-{{ day }}-{{ slot }}"
             hx-swap="outerHTML"
             title="Aggiungi una ricetta">+</button>

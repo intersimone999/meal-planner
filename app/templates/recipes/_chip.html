@@ -3,7 +3,7 @@
 <span class="chip removable" id="chip-{{ ing.id }}">
   {% if e %}{{ e }} {% endif %}{{ ing.name }}
   <button class="chip-remove"
-          hx-delete="/recipes/{{ recipe.id }}/ingredients/{{ ing.id }}"
+          hx-delete="{{ root_path }}/recipes/{{ recipe.id }}/ingredients/{{ ing.id }}"
           hx-target="#chip-{{ ing.id }}"
           hx-swap="outerHTML"
           title="Rimuovi">×</button>

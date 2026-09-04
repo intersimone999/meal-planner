@@ -9,7 +9,7 @@
     <h2>Esporta</h2>
     <p>Scarica un JSON con tutti gli ingredienti, le ricette e i modelli.</p>
     <p class="hint">Il piano settimanale e la lista della spesa non sono inclusi.</p>
-    <a class="button primary" href="/export">
+    <a class="button primary" href="{{ root_path }}/export">
       <svg class="icon"><use href="#i-swap"/></svg> Scarica JSON
     </a>
   </div>
@@ -20,7 +20,7 @@
 
     {% if error %}<div class="error">{{ error }}</div>{% endif %}
 
-    <form method="post" action="/import" enctype="multipart/form-data" class="form-stack">
+    <form method="post" action="{{ root_path }}/import" enctype="multipart/form-data" class="form-stack">
       <div>
         <label for="file">File JSON</label>
         <input id="file" type="file" name="file" accept="application/json,.json" required>

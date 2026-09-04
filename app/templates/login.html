@@ -16,7 +16,7 @@
       <p class="hint">Autenticazione disattivata (modalità sviluppo). Premi «Accedi» per continuare.</p>
     {% endif %}
     {% if error %}<div class="error">{{ error }}</div>{% endif %}
-    <form method="post" action="/login" class="form-stack">
+    <form method="post" action="{{ root_path }}/login" class="form-stack">
       <input type="hidden" name="next" value="{{ next }}">
       <div>
         <label for="p">Password</label>

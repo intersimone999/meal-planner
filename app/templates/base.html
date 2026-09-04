@@ -56,7 +56,7 @@
       </nav>
       {% if not is_auth_bypassed() %}
         <div class="sidebar-footer">
-          <form method="post" action="/logout" class="logout-form">
+          <form method="post" action="{{ root_path }}/logout" class="logout-form">
             <button type="submit" class="button ghost">
               <svg class="icon"><use href="#i-logout"/></svg>
               Esci
@@ -77,12 +77,12 @@
           <span>Altro</span>
         </summary>
         <div class="bottom-more-menu">
-          <a href="/recipes"><svg class="icon"><use href="#i-book"/></svg> Ricette</a>
-          <a href="/ingredients"><svg class="icon"><use href="#i-leaf"/></svg> Ingredienti</a>
-          <a href="/pantry"><svg class="icon"><use href="#i-list"/></svg> Dispensa</a>
-          <a href="/import"><svg class="icon"><use href="#i-swap"/></svg> Import/Export</a>
+          <a href="{{ root_path }}/recipes"><svg class="icon"><use href="#i-book"/></svg> Ricette</a>
+          <a href="{{ root_path }}/ingredients"><svg class="icon"><use href="#i-leaf"/></svg> Ingredienti</a>
+          <a href="{{ root_path }}/pantry"><svg class="icon"><use href="#i-list"/></svg> Dispensa</a>
+          <a href="{{ root_path }}/import"><svg class="icon"><use href="#i-swap"/></svg> Import/Export</a>
           {% if not is_auth_bypassed() %}
-            <form method="post" action="/logout" class="more-logout-form">
+            <form method="post" action="{{ root_path }}/logout" class="more-logout-form">
               <button type="submit"><svg class="icon"><use href="#i-logout"/></svg> Esci</button>
             </form>
           {% endif %}

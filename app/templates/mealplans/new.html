@@ -8,14 +8,14 @@
   {% if error %}<div class="error">{{ error }}</div>{% endif %}
 
   <div class="card">
-    <form method="post" action="/mealplans" class="form-stack">
+    <form method="post" action="{{ root_path }}/mealplans" class="form-stack">
       <div>
         <label for="name">Nome</label>
         <input id="name" type="text" name="name" value="{{ name or '' }}" required autofocus maxlength="120" placeholder="es. Settimana standard">
       </div>
       <div class="form-actions">
         <button type="submit" class="button primary">Salva e continua</button>
-        <a class="button" href="/mealplans">Annulla</a>
+        <a class="button" href="{{ root_path }}/mealplans">Annulla</a>
       </div>
     </form>
     <p class="hint" style="margin-top:1rem">Dopo il salvataggio potrai comporre la griglia con le ricette.</p>

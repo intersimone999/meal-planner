@@ -4,7 +4,7 @@
   <div class="page-header">
     <h1>Ricette</h1>
     <div class="actions">
-      <a class="button primary" href="/recipes/new">
+      <a class="button primary" href="{{ root_path }}/recipes/new">
         <svg class="icon"><use href="#i-plus"/></svg> Nuova ricetta
       </a>
     </div>
@@ -18,7 +18,7 @@
       <tbody>
         {% for r in recipes %}
           <tr>
-            <td><a href="/recipes/{{ r.id }}/edit">{{ r.name }}</a></td>
+            <td><a href="{{ root_path }}/recipes/{{ r.id }}/edit">{{ r.name }}</a></td>
             <td><span class="chip type-{{ r.type }}">{{ type_emoji(r.type) }} {{ type_label(r.type) }}</span></td>
             <td>
               {% if r.ingredients %}
@@ -33,9 +33,9 @@
               {% endif %}
             </td>
             <td>
-              <a class="button" href="/recipes/{{ r.id }}/edit">Modifica</a>
+              <a class="button" href="{{ root_path }}/recipes/{{ r.id }}/edit">Modifica</a>
               <button class="button danger icon-only"
-                      hx-post="/recipes/{{ r.id }}/delete"
+                      hx-post="{{ root_path }}/recipes/{{ r.id }}/delete"
                       hx-confirm="Eliminare la ricetta «{{ r.name }}»?"
                       hx-target="closest tr"
                       hx-swap="outerHTML"
@@ -52,7 +52,7 @@
       <div class="empty-state">
         <svg class="icon-lg"><use href="#i-book"/></svg>
         <p>Nessuna ricetta. Aggiungine una per iniziare.</p>
-        <a class="button primary" href="/recipes/new">
+        <a class="button primary" href="{{ root_path }}/recipes/new">
           <svg class="icon"><use href="#i-plus"/></svg> Crea la prima ricetta
         </a>
       </div>

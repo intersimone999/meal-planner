@@ -8,7 +8,7 @@
   {% if error %}<div class="error">{{ error }}</div>{% endif %}
 
   <div class="card">
-    <form method="post" action="/recipes" class="form-stack">
+    <form method="post" action="{{ root_path }}/recipes" class="form-stack">
       <div>
         <label for="name">Nome</label>
         <input id="name" type="text" name="name" value="{{ name or '' }}" required autofocus maxlength="200" placeholder="es. Pasta al pesto">
@@ -30,7 +30,7 @@
       </div>
       <div class="form-actions">
         <button type="submit" class="button primary">Salva e continua</button>
-        <a class="button" href="/recipes">Annulla</a>
+        <a class="button" href="{{ root_path }}/recipes">Annulla</a>
       </div>
     </form>
     <p class="hint" style="margin-top:1rem">Dopo il salvataggio potrai aggiungere gli ingredienti.</p>

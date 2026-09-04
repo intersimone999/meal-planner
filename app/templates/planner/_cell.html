@@ -5,9 +5,9 @@
       {% for m in meals %}
         <li class="dish">
           <span class="dish-type type-{{ m.recipe.type }}" title="{{ type_label(m.recipe.type) }}"><span class="type-emoji">{{ type_emoji(m.recipe.type) }}</span><span class="type-label"> {{ type_label(m.recipe.type) }}</span></span>
-          <a class="dish-name" href="/recipes/{{ m.recipe.id }}/edit">{{ m.recipe.name }}</a>
+          <a class="dish-name" href="{{ root_path }}/recipes/{{ m.recipe.id }}/edit">{{ m.recipe.name }}</a>
           <button class="dish-remove"
-                  hx-delete="/planner/{{ year }}/{{ week }}/{{ _day }}/{{ slot }}/{{ m.recipe_id }}"
+                  hx-delete="{{ root_path }}/planner/{{ year }}/{{ week }}/{{ _day }}/{{ slot }}/{{ m.recipe_id }}"
                   hx-target="#cell-{{ _day }}-{{ slot }}"
                   hx-swap="outerHTML"
                   title="Rimuovi">
@@ -17,7 +17,7 @@
       {% endfor %}
     </ul>
     <button class="cell-add-more"
-            hx-get="/planner/{{ year }}/{{ week }}/{{ _day }}/{{ slot }}/edit"
+            hx-get="{{ root_path }}/planner/{{ year }}/{{ week }}/{{ _day }}/{{ slot }}/edit"
             hx-target="#cell-{{ _day }}-{{ slot }}"
             hx-swap="outerHTML"
             title="Aggiungi un altro piatto">
@@ -25,7 +25,7 @@
     </button>
   {% else %}
     <button class="cell-add"
-            hx-get="/planner/{{ year }}/{{ week }}/{{ _day }}/{{ slot }}/edit"
+            hx-get="{{ root_path }}/planner/{{ year }}/{{ week }}/{{ _day }}/{{ slot }}/edit"
             hx-target="#cell-{{ _day }}-{{ slot }}"
             hx-swap="outerHTML"
             title="Aggiungi una ricetta">+</button>

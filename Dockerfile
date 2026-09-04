@@ -16,7 +16,7 @@ COPY app ./app
 ENV MENUAPP_DB_PATH=/data/menuapp.db
 VOLUME ["/data"]
 
-# Auth env vars (all optional):
+# Runtime env vars (all optional):
 #   MENUAPP_PASSWORD                 → master password. If unset the login
 #                                      page accepts anything and every route
 #                                      is open (dev mode); a warning is logged.
@@ -25,7 +25,14 @@ VOLUME ["/data"]
 #                                      start (sessions won't survive restart).
 #   MENUAPP_HTTPS_ONLY=true          → set when serving over HTTPS so the
 #                                      session cookie is marked Secure.
+#   MENUAPP_ROOT_PATH=/meal-planner  → set when the app runs behind a
+#                                      reverse-proxy sub-path. Templates and
+#                                      redirect headers auto-prefix with it.
 
 EXPOSE 8000
 
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# CMD is a shell form so `${MENUAPP_ROOT_PATH:+…}` can conditionally add
+# --root-path (needed only when the app is proxied at a sub-path). Also
+# --forwarded-allow-ips="*" so uvicorn honours X-Forwarded-* from any local
+# proxy (the container is only reachable from the host anyway).
+CMD ["sh", "-c", "exec uvicorn app.main:app --host 0.0.0.0 --port 8000 --proxy-headers --forwarded-allow-ips='*' ${MENUAPP_ROOT_PATH:+--root-path \"$MENUAPP_ROOT_PATH\"}"]

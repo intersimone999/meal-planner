@@ -17,7 +17,7 @@
                 {% for m in meals %}
                   <li class="dish">
                     <span class="dish-type type-{{ m.recipe.type }}"><span class="type-emoji">{{ type_emoji(m.recipe.type) }}</span><span class="type-label"> {{ type_label(m.recipe.type) }}</span></span>
-                    <a class="dish-name" href="/recipes/{{ m.recipe.id }}/edit">{{ m.recipe.name }}</a>
+                    <a class="dish-name" href="{{ root_path }}/recipes/{{ m.recipe.id }}/edit">{{ m.recipe.name }}</a>
                   </li>
                 {% endfor %}
               </ul>
@@ -25,7 +25,7 @@
               <div class="slot-empty">— niente in programma</div>
             {% endif %}
           </div>
-          <a class="button ghost" href="/planner/{{ year }}/{{ week }}" title="Vai al piano">
+          <a class="button ghost" href="{{ root_path }}/planner/{{ year }}/{{ week }}" title="Vai al piano">
             <svg class="icon"><use href="#i-arrow-right"/></svg>
           </a>
         </div>
@@ -36,19 +36,19 @@
   <section class="card">
     <h2>Azioni rapide</h2>
     <div class="quick-actions">
-      <a class="button primary" href="/recipes/new">
+      <a class="button primary" href="{{ root_path }}/recipes/new">
         <svg class="icon"><use href="#i-plus"/></svg> Nuova ricetta
       </a>
-      <a class="button" href="/planner">
+      <a class="button" href="{{ root_path }}/planner">
         <svg class="icon"><use href="#i-calendar"/></svg> Pianifica la settimana
       </a>
-      <a class="button" href="/shopping">
+      <a class="button" href="{{ root_path }}/shopping">
         <svg class="icon"><use href="#i-cart"/></svg> Lista della spesa
       </a>
-      <a class="button" href="/pantry">
+      <a class="button" href="{{ root_path }}/pantry">
         <svg class="icon"><use href="#i-list"/></svg> Dispensa
       </a>
-      <a class="button" href="/mealplans">
+      <a class="button" href="{{ root_path }}/mealplans">
         <svg class="icon"><use href="#i-layout"/></svg> Modelli di settimana
       </a>
     </div>
@@ -59,7 +59,7 @@
     {% if recent_recipes %}
       <div class="recent-recipes">
         {% for r in recent_recipes %}
-          <a href="/recipes/{{ r.id }}/edit">
+          <a href="{{ root_path }}/recipes/{{ r.id }}/edit">
             <span class="chip type-{{ r.type }}" style="margin-right:0.4rem">{{ type_emoji(r.type) }} {{ type_label(r.type) }}</span>
             {{ r.name }}
           </a>
@@ -69,7 +69,7 @@
       <div class="empty-state">
         <svg class="icon-lg"><use href="#i-book"/></svg>
         <p>Ancora nessuna ricetta. Iniziamo?</p>
-        <a class="button primary" href="/recipes/new">
+        <a class="button primary" href="{{ root_path }}/recipes/new">
           <svg class="icon"><use href="#i-plus"/></svg> Crea la prima ricetta
         </a>
       </div>

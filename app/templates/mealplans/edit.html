@@ -4,14 +4,14 @@
   <div class="page-header">
     <h1>Modello · {{ template.name }}</h1>
     <div class="actions">
-      <a class="button" href="/mealplans">‹ Tutti i modelli</a>
+      <a class="button" href="{{ root_path }}/mealplans">‹ Tutti i modelli</a>
     </div>
   </div>
 
   {% if error %}<div class="error">{{ error }}</div>{% endif %}
 
   <div class="card">
-    <form method="post" action="/mealplans/{{ template.id }}" class="form-stack">
+    <form method="post" action="{{ root_path }}/mealplans/{{ template.id }}" class="form-stack">
       <div>
         <label for="name">Nome</label>
         <input id="name" type="text" name="name" value="{{ template.name }}" required maxlength="120">
@@ -48,7 +48,7 @@
 
   <div class="card">
     <h2>Zona pericolosa</h2>
-    <form method="post" action="/mealplans/{{ template.id }}/delete"
+    <form method="post" action="{{ root_path }}/mealplans/{{ template.id }}/delete"
           onsubmit="return confirm('Eliminare il modello «{{ template.name }}»?');">
       <button type="submit" class="button danger">
         <svg class="icon"><use href="#i-x"/></svg> Elimina modello

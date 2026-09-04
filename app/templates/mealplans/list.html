@@ -4,7 +4,7 @@
   <div class="page-header">
     <h1>Modelli di settimana</h1>
     <div class="actions">
-      <a class="button primary" href="/mealplans/new">
+      <a class="button primary" href="{{ root_path }}/mealplans/new">
         <svg class="icon"><use href="#i-plus"/></svg> Nuovo modello
       </a>
     </div>
@@ -16,12 +16,12 @@
       <tbody>
         {% for tpl, usage in rows %}
           <tr>
-            <td><a href="/mealplans/{{ tpl.id }}/edit">{{ tpl.name }}</a></td>
+            <td><a href="{{ root_path }}/mealplans/{{ tpl.id }}/edit">{{ tpl.name }}</a></td>
             <td class="muted">{{ usage }} / 14</td>
             <td>
-              <a class="button" href="/mealplans/{{ tpl.id }}/edit">Modifica</a>
+              <a class="button" href="{{ root_path }}/mealplans/{{ tpl.id }}/edit">Modifica</a>
               <button class="button danger"
-                      hx-post="/mealplans/{{ tpl.id }}/delete"
+                      hx-post="{{ root_path }}/mealplans/{{ tpl.id }}/delete"
                       hx-confirm="Eliminare il modello «{{ tpl.name }}»?"
                       hx-target="closest tr"
                       hx-swap="outerHTML">
@@ -37,7 +37,7 @@
       <div class="empty-state">
         <svg class="icon-lg"><use href="#i-layout"/></svg>
         <p>Nessun modello. Creane uno per applicarlo poi a una settimana del piano.</p>
-        <a class="button primary" href="/mealplans/new">
+        <a class="button primary" href="{{ root_path }}/mealplans/new">
           <svg class="icon"><use href="#i-plus"/></svg> Crea il primo modello
         </a>
       </div>

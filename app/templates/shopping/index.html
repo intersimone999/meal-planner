@@ -2,13 +2,13 @@
 {% block title %}Spesa — settimana {{ week }}/{{ year }}{% endblock %}
 {% block content %}
   <div class="week-header">
-    <a class="button" href="/shopping/{{ prev_year }}/{{ prev_week }}" title="Settimana precedente">‹</a>
+    <a class="button" href="{{ root_path }}/shopping/{{ prev_year }}/{{ prev_week }}" title="Settimana precedente">‹</a>
     <h1>
       {{ relative_label }}
       <span class="week-range">{{ date_range }} {{ year }}</span>
     </h1>
-    <a class="button" href="/shopping" title="Vai a questa settimana">Oggi</a>
-    <a class="button" href="/shopping/{{ next_year }}/{{ next_week }}" title="Settimana successiva">›</a>
+    <a class="button" href="{{ root_path }}/shopping" title="Vai a questa settimana">Oggi</a>
+    <a class="button" href="{{ root_path }}/shopping/{{ next_year }}/{{ next_week }}" title="Settimana successiva">›</a>
   </div>
 
   <section class="card">
@@ -35,10 +35,10 @@
         <svg class="icon-lg"><use href="#i-cart"/></svg>
         <p>Nulla da comprare. Pianifica qualche ricetta o aggiungi voci in dispensa.</p>
         <div style="display:flex;gap:0.5rem;justify-content:center;flex-wrap:wrap">
-          <a class="button" href="/planner/{{ year }}/{{ week }}">
+          <a class="button" href="{{ root_path }}/planner/{{ year }}/{{ week }}">
             <svg class="icon"><use href="#i-calendar"/></svg> Piano
           </a>
-          <a class="button" href="/pantry">
+          <a class="button" href="{{ root_path }}/pantry">
             <svg class="icon"><use href="#i-list"/></svg> Dispensa
           </a>
         </div>

@@ -11,7 +11,7 @@
   {% endif %}
 
   {% if recipes %}
-    <form hx-post="/mealplans/{{ template_id }}/cell/{{ day }}/{{ slot }}"
+    <form hx-post="{{ root_path }}/mealplans/{{ template_id }}/cell/{{ day }}/{{ slot }}"
           hx-target="#tcell-{{ day }}-{{ slot }}"
           hx-swap="outerHTML"
           class="cell-edit-form">
@@ -24,7 +24,7 @@
       <div class="cell-actions">
         <button type="submit" class="button primary">Aggiungi</button>
         <button type="button" class="button"
-                hx-get="/mealplans/{{ template_id }}/cell/{{ day }}/{{ slot }}"
+                hx-get="{{ root_path }}/mealplans/{{ template_id }}/cell/{{ day }}/{{ slot }}"
                 hx-target="#tcell-{{ day }}-{{ slot }}"
                 hx-swap="outerHTML">Chiudi</button>
       </div>
@@ -32,7 +32,7 @@
   {% else %}
     <p class="hint" style="margin:0.5rem 0">Nessun'altra ricetta disponibile.</p>
     <button class="button"
-            hx-get="/mealplans/{{ template_id }}/cell/{{ day }}/{{ slot }}"
+            hx-get="{{ root_path }}/mealplans/{{ template_id }}/cell/{{ day }}/{{ slot }}"
             hx-target="#tcell-{{ day }}-{{ slot }}"
             hx-swap="outerHTML">Chiudi</button>
   {% endif %}

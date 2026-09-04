@@ -1,0 +1,29 @@
+# Meal Planner — Apache reverse-proxy config
+#
+# Installed by scripts/install-apache-config.sh. Replaces __PORT__ and
+# __ROOT_PATH__ placeholders at install time.
+#
+# Mounts the app at http://<host>__ROOT_PATH__/ by proxying to a local
+# uvicorn container bound to 127.0.0.1:__PORT__. All /static/* and API
+# calls under __ROOT_PATH__ go through this vhost.
+
+<VirtualHost *:80>
+    ServerAdmin webmaster@localhost
+    # Serve directly on the machine's IP — no ServerName.
+
+    ErrorLog  ${APACHE_LOG_DIR}/meal-planner-error.log
+    CustomLog ${APACHE_LOG_DIR}/meal-planner-access.log combined
+
+    # Trailing-slash canonicalisation: /__ROOT_PATH__ → /__ROOT_PATH__/
+    RedirectMatch permanent "^__ROOT_PATH__$" "__ROOT_PATH__/"
+
+    ProxyRequests Off
+    ProxyPreserveHost On
+    RequestHeader set X-Forwarded-Proto "%{REQUEST_SCHEME}s"
+
+    <Location "__ROOT_PATH__/">
+        Require all granted
+        ProxyPass         "http://127.0.0.1:__PORT__/" nocanon
+        ProxyPassReverse  "http://127.0.0.1:__PORT__/"
+    </Location>
+</VirtualHost>

@@ -16,7 +16,7 @@
         {% for ing, usage in rows %}
           <tr>
             <td>
-              <form method="post" action="/ingredients/{{ ing.id }}/rename" class="inline-form">
+              <form method="post" action="{{ root_path }}/ingredients/{{ ing.id }}/rename" class="inline-form">
                 <input type="text" name="name" value="{{ ing.name }}" required maxlength="120">
                 <button type="submit" class="button">Rinomina</button>
               </form>
@@ -27,7 +27,7 @@
               {% else %}{{ usage }} ricette{% endif %}
             </td>
             <td class="hide-mobile">
-              <form method="post" action="/ingredients/{{ ing.id }}/delete" class="inline-form"
+              <form method="post" action="{{ root_path }}/ingredients/{{ ing.id }}/delete" class="inline-form"
                     onsubmit="return confirm('Eliminare l\'ingrediente «{{ ing.name }}»?');">
                 <button type="submit" class="button danger" {% if usage > 0 %}disabled title="Ancora usato in {{ usage }} ricett{{ 'a' if usage == 1 else 'e' }}"{% endif %}>
                   <svg class="icon"><use href="#i-x"/></svg>
@@ -35,7 +35,7 @@
               </form>
             </td>
             <td class="hide-mobile">
-              <form method="post" action="/ingredients/{{ ing.id }}/merge" class="inline-form"
+              <form method="post" action="{{ root_path }}/ingredients/{{ ing.id }}/merge" class="inline-form"
                     onsubmit="return confirm('Unire «{{ ing.name }}» nell\'ingrediente scelto? L\'operazione è irreversibile.');">
                 <select name="target_id">
                   <option value="">— scegli —</option>
@@ -59,7 +59,7 @@
       <div class="empty-state">
         <svg class="icon-lg"><use href="#i-leaf"/></svg>
         <p>Nessun ingrediente. Vengono creati automaticamente quando li aggiungi a una ricetta.</p>
-        <a class="button primary" href="/recipes/new">
+        <a class="button primary" href="{{ root_path }}/recipes/new">
           <svg class="icon"><use href="#i-plus"/></svg> Crea una ricetta
         </a>
       </div>

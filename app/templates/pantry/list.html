@@ -5,12 +5,12 @@
     <h1>Dispensa</h1>
   </div>
 
-  <p class="hint">Voci ricorrenti che vuoi trovare sempre nella lista della spesa (caffè, detersivo, carta igienica…). Non si spuntano qui: compaiono automaticamente su <a href="/shopping">Spesa</a>, dove si spuntano settimana per settimana.</p>
+  <p class="hint">Voci ricorrenti che vuoi trovare sempre nella lista della spesa (caffè, detersivo, carta igienica…). Non si spuntano qui: compaiono automaticamente su <a href="{{ root_path }}/shopping">Spesa</a>, dove si spuntano settimana per settimana.</p>
 
   {% if error %}<div class="error">{{ error }}</div>{% endif %}
 
   <div class="card">
-    <form method="post" action="/pantry" class="add-row">
+    <form method="post" action="{{ root_path }}/pantry" class="add-row">
       <input type="text" name="name" required maxlength="200" autofocus
              placeholder="Aggiungi una voce e premi Invio" autocomplete="off">
       <button type="submit" class="button primary">
@@ -26,7 +26,7 @@
         {% for item in items %}
           <tr>
             <td>
-              <form method="post" action="/pantry/{{ item.id }}/rename" class="inline-form">
+              <form method="post" action="{{ root_path }}/pantry/{{ item.id }}/rename" class="inline-form">
                 {% set e = ing_emoji(item.name) %}
                 {% if e %}<span aria-hidden="true">{{ e }}</span>{% endif %}
                 <input type="text" name="name" value="{{ item.name }}" required maxlength="200">
@@ -34,7 +34,7 @@
               </form>
             </td>
             <td>
-              <form method="post" action="/pantry/{{ item.id }}/delete" class="inline-form"
+              <form method="post" action="{{ root_path }}/pantry/{{ item.id }}/delete" class="inline-form"
                     onsubmit="return confirm('Eliminare «{{ item.name }}»?');">
                 <button type="submit" class="button danger icon-only" title="Elimina">
                   <svg class="icon"><use href="#i-x"/></svg>
