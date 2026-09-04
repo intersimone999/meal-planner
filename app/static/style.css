@@ -499,11 +499,14 @@ tbody tr:hover td.cell.editing { background: var(--warning-soft); }
 .dish-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 0.25rem; }
 .dish-list.compact { margin-top: 0.15rem; }
 .dish {
-  display: flex; align-items: center; gap: 0.4rem;
+  display: flex; align-items: flex-start; gap: 0.4rem;
   padding: 0.2rem 0.35rem;
   border-radius: var(--radius-sm);
   font-size: 0.9rem;
 }
+/* Give the pill a bit of top offset so it visually aligns with the first
+   line of the (possibly wrapped) name. */
+.dish-type { margin-top: 0.15rem; }
 .dish-type {
   font-size: 0.65rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;
   padding: 0.1rem 0.4rem; border-radius: var(--radius-full);
@@ -528,8 +531,9 @@ tbody tr:hover td.cell.editing { background: var(--warning-soft); }
 }
 .dish-name {
   flex: 1; color: var(--text); text-decoration: none; font-weight: 500;
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   min-width: 0;
+  overflow-wrap: anywhere;   /* long single words break instead of clipping */
+  line-height: 1.25;
 }
 a.dish-name:hover { text-decoration: underline; }
 .dish-remove {
