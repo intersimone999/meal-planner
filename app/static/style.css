@@ -172,8 +172,8 @@ em { color: var(--text-muted); font-style: normal; }
 .bottom-bar > details > summary .icon { width: 22px; height: 22px; }
 
 /* "Altro" pop-up menu on the bottom bar. Uses native <details> so no JS. */
-.bottom-more { position: relative; display: flex; }
-.bottom-more > summary { list-style: none; }
+.bottom-more { position: relative; display: flex; flex: 1; }
+.bottom-more > summary { list-style: none; width: 100%; }
 .bottom-more > summary::-webkit-details-marker { display: none; }
 .bottom-more[open] > summary { color: var(--accent); }
 .bottom-more-menu {

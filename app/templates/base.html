@@ -67,18 +67,18 @@
     </aside>
 
     <nav class="bottom-bar">
-      {{ nav_link('/',         'Home',    'home',     '/') }}
-      {{ nav_link('/recipes',  'Ricette', 'book',     '/recipes') }}
-      {{ nav_link('/planner',  'Piano',   'calendar', '/planner') }}
-      {{ nav_link('/shopping', 'Spesa',   'cart',     '/shopping') }}
+      {{ nav_link('/',          'Home',    'home',     '/') }}
+      {{ nav_link('/planner',   'Piano',   'calendar', '/planner') }}
+      {{ nav_link('/shopping',  'Spesa',   'cart',     '/shopping') }}
+      {{ nav_link('/mealplans', 'Modelli', 'layout',   '/mealplans') }}
       <details class="bottom-more">
         <summary>
           <svg class="icon"><use href="#i-menu"/></svg>
           <span>Altro</span>
         </summary>
         <div class="bottom-more-menu">
+          <a href="/recipes"><svg class="icon"><use href="#i-book"/></svg> Ricette</a>
           <a href="/ingredients"><svg class="icon"><use href="#i-leaf"/></svg> Ingredienti</a>
-          <a href="/mealplans"><svg class="icon"><use href="#i-layout"/></svg> Modelli</a>
           <a href="/pantry"><svg class="icon"><use href="#i-list"/></svg> Dispensa</a>
           <a href="/import"><svg class="icon"><use href="#i-swap"/></svg> Import/Export</a>
           {% if not is_auth_bypassed() %}
