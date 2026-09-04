@@ -81,15 +81,33 @@ def _is_public(path: str) -> bool:
     return any(path.startswith(p) for p in PUBLIC_PATH_PREFIXES)
 
 
+def _route_path(request: Request) -> str:
+    """Return the app-relative path, stripping the ASGI root_path.
+
+    Starlette's convention: `scope["path"]` INCLUDES `scope["root_path"]`
+    when uvicorn runs with --root-path. Routes are registered relative
+    to the app root, so public-path checks and `next` URLs must compare
+    against the root-stripped view.
+    """
+    root = request.scope.get("root_path", "")
+    path = request.url.path
+    if root and path.startswith(root + "/"):
+        return path[len(root):]
+    if root and path == root:
+        return "/"
+    return path
+
+
 class AuthMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
-        if _is_public(request.url.path):
+        path = _route_path(request)
+        if _is_public(path):
             return await call_next(request)
         if is_auth_bypassed():
             return await call_next(request)
         if request.session.get("user"):
             return await call_next(request)
-        next_url = request.url.path
+        next_url = path
         if request.url.query:
             next_url += "?" + request.url.query
         return RedirectResponse(

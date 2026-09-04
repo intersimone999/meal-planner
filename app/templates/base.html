@@ -31,10 +31,14 @@
     <symbol id="i-list" viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></symbol>
   </svg>
 
-  {% set p = request.url.path %}
+  {# Route path with root_path stripped so active-state matching compares
+     against app-relative paths — same shape as the `match` arg. #}
+  {% set _p_raw = request.url.path %}
+  {% set p = _p_raw[root_path|length:] if root_path and _p_raw.startswith(root_path) else _p_raw %}
+  {% if not p %}{% set p = '/' %}{% endif %}
   {% macro nav_link(href, label, icon, match) %}
     {% set active = (match == '/' and p == '/') or (match != '/' and p.startswith(match)) %}
-    <a href="{{ href }}" class="nav-item {% if active %}active{% endif %}">
+    <a href="{{ root_path }}{{ href }}" class="nav-item {% if active %}active{% endif %}">
       <svg class="icon"><use href="#i-{{ icon }}"/></svg>
       <span>{{ label }}</span>
     </a>

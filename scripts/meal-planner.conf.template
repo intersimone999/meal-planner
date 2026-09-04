@@ -12,13 +12,14 @@
 # the rule applies to whichever vhost handles the request — including
 # the default one.
 #
-# IMPORTANT: the ProxyPass TARGET keeps the same sub-path as the source.
-# We DON'T want Apache to strip the prefix. uvicorn runs with
-# --root-path=/meal-planner and Starlette's routing (get_route_path) is
-# designed for scope["path"] to CONTAIN root_path so it can strip it
-# internally. If Apache strips too, Starlette's StaticFiles mount
-# returns 404 for /static/* because the calculated file path is off by
-# a segment. Keep target and source aligned.
+# IMPORTANT: this config STRIPS the sub-path when proxying. The uvicorn
+# in the container runs with --root-path=/meal-planner (set via
+# MENUAPP_ROOT_PATH in the compose env). uvicorn re-prepends the prefix
+# to scope["path"] as it reads the request; Starlette's routing then
+# strips it internally via get_route_path(). Net: routes registered as
+# /login match a request originally addressed to /meal-planner/login.
+# Do NOT keep the prefix in the ProxyPass target — you'd end up with
+# scope["path"] = "/meal-planner/meal-planner/login" (double prefix).
 
 ProxyRequests Off
 ProxyPreserveHost On
@@ -28,7 +29,6 @@ RequestHeader set X-Forwarded-Proto "%{REQUEST_SCHEME}s"
 # below, which is anchored on the trailing slash, actually matches).
 RedirectMatch permanent "^__ROOT_PATH__$" "__ROOT_PATH__/"
 
-# Note the target URL: it ENDS with the same sub-path as the source,
-# so the /meal-planner/ prefix is preserved when forwarding.
-ProxyPass         "__ROOT_PATH__/" "http://127.0.0.1:__PORT____ROOT_PATH__/"
-ProxyPassReverse  "__ROOT_PATH__/" "http://127.0.0.1:__PORT____ROOT_PATH__/"
+# Target ends with "/" (no sub-path) — Apache strips the source prefix.
+ProxyPass         "__ROOT_PATH__/" "http://127.0.0.1:__PORT__/"
+ProxyPassReverse  "__ROOT_PATH__/" "http://127.0.0.1:__PORT__/"
