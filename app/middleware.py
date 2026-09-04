@@ -36,15 +36,22 @@ class StripRootPathMiddleware:
         if scope["type"] in ("http", "websocket"):
             root_path = scope.get("root_path", "")
             path = scope.get("path", "")
-            if root_path and path.startswith(root_path):
-                new_path = path[len(root_path):] or "/"
-                scope = dict(scope)  # avoid mutating a shared scope
+            if root_path and (path.startswith(root_path + "/") or path == root_path):
+                # Strip repeatedly: pathological proxy chains (two overlapping
+                # ProxyPass rules, for instance) can double-prefix the URL.
+                # `+"/"` in the check prevents false matches on names like
+                # `/meal-planner-foo`.
+                new_path = path
+                while new_path.startswith(root_path + "/") or new_path == root_path:
+                    new_path = new_path[len(root_path):] or "/"
+                scope = dict(scope)
                 scope["path"] = new_path
                 raw = scope.get("raw_path")
                 if isinstance(raw, bytes):
                     prefix_b = root_path.encode("ascii")
-                    if raw.startswith(prefix_b):
-                        scope["raw_path"] = raw[len(prefix_b):] or b"/"
+                    while raw.startswith(prefix_b + b"/") or raw == prefix_b:
+                        raw = raw[len(prefix_b):] or b"/"
+                    scope["raw_path"] = raw
         await self.app(scope, receive, send)
 
 
