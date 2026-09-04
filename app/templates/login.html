@@ -4,14 +4,14 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light dark">
-  <title>Accedi — menuapp</title>
+  <title>Accedi — Meal Planner</title>
   <link rel="preconnect" href="https://rsms.me/">
   <link rel="stylesheet" href="https://rsms.me/inter/inter.css">
   <link rel="stylesheet" href="{{ url_for('static', path='style.css') }}?v={{ static_v('style.css') }}">
 </head>
 <body class="login-page">
   <div class="login-card">
-    <h1>menuapp</h1>
+    <h1>Meal Planner</h1>
     {% if bypassed %}
       <p class="hint">Autenticazione disattivata (modalità sviluppo). Premi «Accedi» per continuare.</p>
     {% endif %}

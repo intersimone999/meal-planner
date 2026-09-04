@@ -51,7 +51,7 @@ def do_import(
 def do_export(session: Session = Depends(get_session)):
     data = export_all(session)
     body = json.dumps(data, ensure_ascii=False, indent=2)
-    fname = f"menuapp-{date.today().isoformat()}.json"
+    fname = f"meal-planner-{date.today().isoformat()}.json"
     return Response(
         content=body,
         media_type="application/json",

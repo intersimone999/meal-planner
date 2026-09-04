@@ -52,8 +52,8 @@ Local (venv):
 - DB migrations: TBD (Alembic if the schema outgrows hand-written SQL)
 
 Docker:
-- Build: `docker build -t menuapp .`
-- Run: `docker run -p 8000:8000 -v $(pwd)/data:/data menuapp`
+- Build: `docker build -t meal-planner .`
+- Run: `docker run -p 8000:8000 -v $(pwd)/data:/data meal-planner`
   (SQLite database persists in the host `./data` directory via the `/data` volume; path is set by `MENUAPP_DB_PATH`.)
 
 ## Architecture — the big picture

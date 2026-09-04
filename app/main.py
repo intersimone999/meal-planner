@@ -35,7 +35,7 @@ async def lifespan(app: FastAPI):
     yield
 
 
-app = FastAPI(title="menuapp", lifespan=lifespan)
+app = FastAPI(title="Meal Planner", lifespan=lifespan)
 
 # Middleware order: SessionMiddleware must run BEFORE AuthMiddleware so that
 # request.session is populated. Starlette applies user-added middleware in

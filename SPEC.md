@@ -1,4 +1,4 @@
-# menuapp — Specification
+# Meal Planner — Specification
 
 _This document is the source of truth for what the app must do. Every implementation decision should be traceable back to a requirement here. Any scope change must be reflected here **before** code is written._
 
