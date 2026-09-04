@@ -60,6 +60,21 @@ templates.env.globals["type_label"] = lambda t: RECIPE_TYPE_LABELS.get(t, t)
 templates.env.globals["type_emoji"] = lambda t: RECIPE_TYPE_EMOJIS.get(t, "")
 templates.env.globals["ing_emoji"] = _ing_emoji
 
+
+# Cache-busting query param for static assets: templates append ?v=<mtime>
+# so the browser refetches CSS whenever the file on disk changes.
+import os as _os  # noqa: E402
+
+
+def _static_v(path: str) -> str:
+    try:
+        return str(int(_os.path.getmtime(_os.path.join("app", "static", path))))
+    except OSError:
+        return "0"
+
+
+templates.env.globals["static_v"] = _static_v
+
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
 app.include_router(auth.router)
