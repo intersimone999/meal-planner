@@ -399,7 +399,15 @@ tbody tr:hover td { background: var(--surface-alt); }
   display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;
   margin-bottom: 1rem;
 }
-.week-header h1 { flex: 1; min-width: 14rem; font-size: 1.35rem; }
+.week-header h1 { flex: 1; min-width: 14rem; font-size: 1.35rem; line-height: 1.15; }
+.week-range {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 400;
+  color: var(--text-muted);
+  margin-top: 0.15rem;
+  letter-spacing: 0;
+}
 
 table.planner {
   table-layout: fixed;

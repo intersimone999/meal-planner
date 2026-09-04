@@ -6,7 +6,13 @@ from sqlalchemy.orm import Session, selectinload
 from app.deps import get_session, templates
 from app.i18n import DAY_NAMES_SHORT, RECIPE_TYPE_RANK, SLOT_LABELS, SLOTS, format_day_month
 from app.models import MealPlanTemplate, PlannedMeal, Recipe, TemplateSlot
-from app.weekutil import current_iso_year_week, iso_week_dates, shift_iso_week
+from app.weekutil import (
+    current_iso_year_week,
+    iso_week_dates,
+    shift_iso_week,
+    week_delta,
+    week_relative_label,
+)
 
 router = APIRouter(prefix="/planner", tags=["planner"])
 
@@ -75,6 +81,7 @@ def show_week(
     mealplans = session.scalars(
         select(MealPlanTemplate).order_by(MealPlanTemplate.name)
     ).all()
+    delta = week_delta(year, week)
     return templates.TemplateResponse(
         request,
         "planner/index.html",
@@ -92,6 +99,7 @@ def show_week(
             "next_year": next_y,
             "next_week": next_w,
             "mealplans": mealplans,
+            "relative_label": week_relative_label(delta),
         },
     )
 
