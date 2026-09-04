@@ -12,7 +12,7 @@ from starlette.middleware.sessions import SessionMiddleware
 from app.db import init_db
 from app.deps import get_session, templates
 from app.i18n import DAY_NAMES_LONG, SLOTS, SLOT_LABELS, format_day_month
-from app.middleware import LocationHeaderRootPathMiddleware, StripRootPathMiddleware
+from app.middleware import LocationHeaderRootPathMiddleware
 from app.models import PlannedMeal, Recipe
 from app.routes import auth, ingredients, mealplans, pantry, planner, portability, recipes, shopping
 from app.security import (
@@ -40,13 +40,20 @@ app = FastAPI(title="Meal Planner", lifespan=lifespan)
 
 # Middleware order (Starlette applies user middleware in reverse — last
 # added is outermost). Effective chain, request travels top → bottom:
-#   StripRootPathMiddleware           (outermost — normalise path in case
-#                                       the proxy forwarded the URL with
-#                                       the mount prefix still present)
-#     └── LocationHeaderRootPathMiddleware  (rewrites outgoing Location
-#                                             headers to include root_path)
-#         └── SessionMiddleware       (populates request.session so ...)
-#             └── AuthMiddleware      (...can check it and redirect)
+#   LocationHeaderRootPathMiddleware  (outermost — rewrites outgoing
+#                                       Location headers to include
+#                                       root_path so browsers stay under
+#                                       the reverse-proxy sub-path)
+#     └── SessionMiddleware           (populates request.session so ...)
+#         └── AuthMiddleware          (...can check it and redirect)
+#
+# NB: DO NOT add a middleware that strips `root_path` from `scope["path"]`.
+# Starlette's Mount / get_route_path() ASSUMES scope["path"] INCLUDES
+# root_path and strips it internally for routing. Stripping in advance
+# breaks the StaticFiles mount (`app.mount("/static", ...)`) with 404.
+# Instead, configure Apache to preserve the prefix on the proxied URL
+# (see scripts/meal-planner.conf.template — target ends in the same
+# sub-path as the source).
 app.add_middleware(AuthMiddleware)
 app.add_middleware(
     SessionMiddleware,
@@ -57,7 +64,6 @@ app.add_middleware(
     session_cookie=SESSION_COOKIE_NAME,
 )
 app.add_middleware(LocationHeaderRootPathMiddleware)
-app.add_middleware(StripRootPathMiddleware)
 
 # Expose auth state to all templates so nav can conditionally render logout.
 templates.env.globals["is_auth_bypassed"] = is_auth_bypassed

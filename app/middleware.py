@@ -10,59 +10,14 @@ Send = Callable[[Message], Awaitable[None]]
 Receive = Callable[[], Awaitable[Message]]
 
 
-class StripRootPathMiddleware:
-    """Strip a leaked `root_path` prefix from the incoming request path.
-
-    Some reverse-proxy configurations (Apache's `ProxyPass … nocanon`,
-    for instance) forward the ORIGINAL URL to the backend instead of the
-    prefix-stripped version. When uvicorn also runs with --root-path, the
-    backend then sees a request whose `scope['path']` still contains the
-    mount prefix — routes registered as `/login` never match against a
-    literal `/meal-planner/login`, and AuthMiddleware treats /meal-planner/
-    /login as private and redirects into a loop.
-
-    This middleware runs OUTERMOST on incoming ASGI scopes. When
-    `scope['path']` starts with `scope['root_path']`, strip the prefix
-    once so every layer below (auth, routing, templates' url_for) sees
-    a clean app-relative path.
-
-    No-op when root_path is empty or already stripped by the proxy.
-    """
-
-    def __init__(self, app):
-        self.app = app
-
-    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
-        if scope["type"] in ("http", "websocket"):
-            root_path = scope.get("root_path", "")
-            path = scope.get("path", "")
-            if root_path and (path.startswith(root_path + "/") or path == root_path):
-                # Strip repeatedly: pathological proxy chains (two overlapping
-                # ProxyPass rules, for instance) can double-prefix the URL.
-                # `+"/"` in the check prevents false matches on names like
-                # `/meal-planner-foo`.
-                new_path = path
-                while new_path.startswith(root_path + "/") or new_path == root_path:
-                    new_path = new_path[len(root_path):] or "/"
-                scope = dict(scope)
-                scope["path"] = new_path
-                raw = scope.get("raw_path")
-                if isinstance(raw, bytes):
-                    prefix_b = root_path.encode("ascii")
-                    while raw.startswith(prefix_b + b"/") or raw == prefix_b:
-                        raw = raw[len(prefix_b):] or b"/"
-                    scope["raw_path"] = raw
-        await self.app(scope, receive, send)
-
-
 class LocationHeaderRootPathMiddleware:
     """Prefix outgoing `Location` headers with the ASGI scope's `root_path`.
 
     When Meal Planner runs behind a reverse-proxy sub-path (e.g. Apache
-    proxying `/meal-planner/*` to the app's `/*`), any redirect the app
-    emits with an origin-relative path like `/login` would send the
-    browser to `http://host/login` — outside the sub-path — breaking the
-    proxy contract.
+    proxying `/meal-planner/*` to the app at root_path=/meal-planner),
+    any redirect the app emits with an origin-relative path like `/login`
+    would send the browser to `http://host/login` — outside the sub-path
+    — breaking the proxy contract.
 
     This middleware inspects `Location` headers on responses; if the
     header starts with `/` (origin-relative), is not protocol-relative

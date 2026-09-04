@@ -11,6 +11,14 @@
 # *:80 doesn't get matched. Instead we add ProxyPass at server scope so
 # the rule applies to whichever vhost handles the request — including
 # the default one.
+#
+# IMPORTANT: the ProxyPass TARGET keeps the same sub-path as the source.
+# We DON'T want Apache to strip the prefix. uvicorn runs with
+# --root-path=/meal-planner and Starlette's routing (get_route_path) is
+# designed for scope["path"] to CONTAIN root_path so it can strip it
+# internally. If Apache strips too, Starlette's StaticFiles mount
+# returns 404 for /static/* because the calculated file path is off by
+# a segment. Keep target and source aligned.
 
 ProxyRequests Off
 ProxyPreserveHost On
@@ -20,10 +28,7 @@ RequestHeader set X-Forwarded-Proto "%{REQUEST_SCHEME}s"
 # below, which is anchored on the trailing slash, actually matches).
 RedirectMatch permanent "^__ROOT_PATH__$" "__ROOT_PATH__/"
 
-# NB: no `nocanon`. With nocanon Apache forwards the raw URL (prefix
-# included) to the backend, which then can't match routes registered
-# without the prefix — you get a redirect loop on /login. StripRoot
-# PathMiddleware on the app side also defends against this, but keep
-# the config clean.
-ProxyPass         "__ROOT_PATH__/" "http://127.0.0.1:__PORT__/"
-ProxyPassReverse  "__ROOT_PATH__/" "http://127.0.0.1:__PORT__/"
+# Note the target URL: it ENDS with the same sub-path as the source,
+# so the /meal-planner/ prefix is preserved when forwarding.
+ProxyPass         "__ROOT_PATH__/" "http://127.0.0.1:__PORT____ROOT_PATH__/"
+ProxyPassReverse  "__ROOT_PATH__/" "http://127.0.0.1:__PORT____ROOT_PATH__/"
