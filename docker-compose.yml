@@ -19,8 +19,12 @@ services:
       # (Docker's default build network sometimes has broken DNS on
       # Debian/Ubuntu.)
       network: host
-    image: ${MEAL_PLANNER_IMAGE:-meal-planner:latest}
-    container_name: ${MEAL_PLANNER_CONTAINER:-meal-planner}
+    # image / container_name are hardcoded because the older Python-based
+    # docker-compose v1 can't parse a default value containing ":" (as in
+    # meal-planner:latest). If you need a custom tag, edit this file or
+    # add a docker-compose.override.yml.
+    image: meal-planner:latest
+    container_name: meal-planner
     restart: unless-stopped
     ports:
       # Bind to 127.0.0.1 only — Apache proxies to it locally; the
