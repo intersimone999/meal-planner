@@ -157,16 +157,55 @@ em { color: var(--text-muted); font-style: normal; }
   justify-content: space-around;
   align-items: stretch;
 }
-.bottom-bar a {
+.bottom-bar a,
+.bottom-bar > details > summary {
   flex: 1;
   display: flex; flex-direction: column; align-items: center; justify-content: center;
   gap: 2px;
   color: var(--text-muted);
   font-size: 0.7rem;
   text-decoration: none;
+  cursor: pointer;
 }
 .bottom-bar a.active { color: var(--accent); }
-.bottom-bar a .icon { width: 22px; height: 22px; }
+.bottom-bar a .icon,
+.bottom-bar > details > summary .icon { width: 22px; height: 22px; }
+
+/* "Altro" pop-up menu on the bottom bar. Uses native <details> so no JS. */
+.bottom-more { position: relative; display: flex; }
+.bottom-more > summary { list-style: none; }
+.bottom-more > summary::-webkit-details-marker { display: none; }
+.bottom-more[open] > summary { color: var(--accent); }
+.bottom-more-menu {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  right: 6px;
+  min-width: 12rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-lg);
+  padding: 0.35rem 0;
+  z-index: 40;
+}
+.bottom-more-menu a,
+.bottom-more-menu button {
+  display: flex; align-items: center; gap: 0.6rem;
+  padding: 0.65rem 1rem;
+  color: var(--text);
+  text-decoration: none;
+  font: inherit;
+  font-size: 0.95rem;
+  background: transparent;
+  border: 0;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+}
+.bottom-more-menu a:hover,
+.bottom-more-menu button:hover { background: var(--surface-alt); }
+.bottom-more-menu .icon { width: 18px; height: 18px; color: var(--text-muted); }
+.bottom-more-menu .more-logout-form { margin: 0; border-top: 1px solid var(--border); }
 
 .content {
   padding: 2rem 2rem 3rem;

@@ -27,6 +27,7 @@
     <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
     <symbol id="i-arrow-right" viewBox="0 0 24 24"><path d="M5 12h14M13 5l7 7-7 7"/></symbol>
     <symbol id="i-inbox" viewBox="0 0 24 24"><path d="M22 12h-6l-2 3h-4l-2-3H2M5.45 5.11L2 12v6a2 2 0 002 2h16a2 2 0 002-2v-6l-3.45-6.89A2 2 0 0016.76 4H7.24a2 2 0 00-1.79 1.11z"/></symbol>
+    <symbol id="i-menu" viewBox="0 0 24 24"><path d="M3 6h18M3 12h18M3 18h18"/></symbol>
   </svg>
 
   {% set p = request.url.path %}
@@ -64,11 +65,26 @@
     </aside>
 
     <nav class="bottom-bar">
-      {{ nav_link('/',            'Home',    'home',     '/') }}
-      {{ nav_link('/recipes',     'Ricette', 'book',     '/recipes') }}
-      {{ nav_link('/planner',     'Piano',   'calendar', '/planner') }}
-      {{ nav_link('/shopping',    'Spesa',   'cart',     '/shopping') }}
-      {{ nav_link('/ingredients', 'Altro',   'leaf',     '/ingredients') }}
+      {{ nav_link('/',         'Home',    'home',     '/') }}
+      {{ nav_link('/recipes',  'Ricette', 'book',     '/recipes') }}
+      {{ nav_link('/planner',  'Piano',   'calendar', '/planner') }}
+      {{ nav_link('/shopping', 'Spesa',   'cart',     '/shopping') }}
+      <details class="bottom-more">
+        <summary>
+          <svg class="icon"><use href="#i-menu"/></svg>
+          <span>Altro</span>
+        </summary>
+        <div class="bottom-more-menu">
+          <a href="/ingredients"><svg class="icon"><use href="#i-leaf"/></svg> Ingredienti</a>
+          <a href="/mealplans"><svg class="icon"><use href="#i-layout"/></svg> Modelli</a>
+          <a href="/import"><svg class="icon"><use href="#i-swap"/></svg> Import/Export</a>
+          {% if not is_auth_bypassed() %}
+            <form method="post" action="/logout" class="more-logout-form">
+              <button type="submit"><svg class="icon"><use href="#i-logout"/></svg> Esci</button>
+            </form>
+          {% endif %}
+        </div>
+      </details>
     </nav>
 
     <main class="content">
