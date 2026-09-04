@@ -3,7 +3,7 @@
     <ul class="dish-list">
       {% for m in meals %}
         <li class="dish existing">
-          <span class="dish-type type-{{ m.recipe.type }}">{{ type_emoji(m.recipe.type) }} {{ type_label(m.recipe.type) }}</span>
+          <span class="dish-type type-{{ m.recipe.type }}"><span class="type-emoji">{{ type_emoji(m.recipe.type) }}</span><span class="type-label"> {{ type_label(m.recipe.type) }}</span></span>
           <span class="dish-name">{{ m.recipe.name }}</span>
         </li>
       {% endfor %}
