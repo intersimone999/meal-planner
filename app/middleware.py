@@ -10,6 +10,44 @@ Send = Callable[[Message], Awaitable[None]]
 Receive = Callable[[], Awaitable[Message]]
 
 
+class StripRootPathMiddleware:
+    """Strip a leaked `root_path` prefix from the incoming request path.
+
+    Some reverse-proxy configurations (Apache's `ProxyPass … nocanon`,
+    for instance) forward the ORIGINAL URL to the backend instead of the
+    prefix-stripped version. When uvicorn also runs with --root-path, the
+    backend then sees a request whose `scope['path']` still contains the
+    mount prefix — routes registered as `/login` never match against a
+    literal `/meal-planner/login`, and AuthMiddleware treats /meal-planner/
+    /login as private and redirects into a loop.
+
+    This middleware runs OUTERMOST on incoming ASGI scopes. When
+    `scope['path']` starts with `scope['root_path']`, strip the prefix
+    once so every layer below (auth, routing, templates' url_for) sees
+    a clean app-relative path.
+
+    No-op when root_path is empty or already stripped by the proxy.
+    """
+
+    def __init__(self, app):
+        self.app = app
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        if scope["type"] in ("http", "websocket"):
+            root_path = scope.get("root_path", "")
+            path = scope.get("path", "")
+            if root_path and path.startswith(root_path):
+                new_path = path[len(root_path):] or "/"
+                scope = dict(scope)  # avoid mutating a shared scope
+                scope["path"] = new_path
+                raw = scope.get("raw_path")
+                if isinstance(raw, bytes):
+                    prefix_b = root_path.encode("ascii")
+                    if raw.startswith(prefix_b):
+                        scope["raw_path"] = raw[len(prefix_b):] or b"/"
+        await self.app(scope, receive, send)
+
+
 class LocationHeaderRootPathMiddleware:
     """Prefix outgoing `Location` headers with the ASGI scope's `root_path`.
 

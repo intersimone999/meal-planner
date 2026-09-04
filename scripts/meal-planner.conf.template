@@ -20,5 +20,10 @@ RequestHeader set X-Forwarded-Proto "%{REQUEST_SCHEME}s"
 # below, which is anchored on the trailing slash, actually matches).
 RedirectMatch permanent "^__ROOT_PATH__$" "__ROOT_PATH__/"
 
-ProxyPass         "__ROOT_PATH__/" "http://127.0.0.1:__PORT__/" nocanon
+# NB: no `nocanon`. With nocanon Apache forwards the raw URL (prefix
+# included) to the backend, which then can't match routes registered
+# without the prefix — you get a redirect loop on /login. StripRoot
+# PathMiddleware on the app side also defends against this, but keep
+# the config clean.
+ProxyPass         "__ROOT_PATH__/" "http://127.0.0.1:__PORT__/"
 ProxyPassReverse  "__ROOT_PATH__/" "http://127.0.0.1:__PORT__/"

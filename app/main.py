@@ -12,7 +12,7 @@ from starlette.middleware.sessions import SessionMiddleware
 from app.db import init_db
 from app.deps import get_session, templates
 from app.i18n import DAY_NAMES_LONG, SLOTS, SLOT_LABELS, format_day_month
-from app.middleware import LocationHeaderRootPathMiddleware
+from app.middleware import LocationHeaderRootPathMiddleware, StripRootPathMiddleware
 from app.models import PlannedMeal, Recipe
 from app.routes import auth, ingredients, mealplans, pantry, planner, portability, recipes, shopping
 from app.security import (
@@ -39,13 +39,14 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="Meal Planner", lifespan=lifespan)
 
 # Middleware order (Starlette applies user middleware in reverse — last
-# added is outermost). Effective chain:
-#   LocationHeaderRootPathMiddleware  (outermost — must see the FINAL
-#                                       Location header, after auth
-#                                       redirects, before it reaches the
-#                                       client)
-#     └── SessionMiddleware           (populates request.session so ...)
-#         └── AuthMiddleware          (...can check it and redirect)
+# added is outermost). Effective chain, request travels top → bottom:
+#   StripRootPathMiddleware           (outermost — normalise path in case
+#                                       the proxy forwarded the URL with
+#                                       the mount prefix still present)
+#     └── LocationHeaderRootPathMiddleware  (rewrites outgoing Location
+#                                             headers to include root_path)
+#         └── SessionMiddleware       (populates request.session so ...)
+#             └── AuthMiddleware      (...can check it and redirect)
 app.add_middleware(AuthMiddleware)
 app.add_middleware(
     SessionMiddleware,
@@ -56,6 +57,7 @@ app.add_middleware(
     session_cookie=SESSION_COOKIE_NAME,
 )
 app.add_middleware(LocationHeaderRootPathMiddleware)
+app.add_middleware(StripRootPathMiddleware)
 
 # Expose auth state to all templates so nav can conditionally render logout.
 templates.env.globals["is_auth_bypassed"] = is_auth_bypassed
