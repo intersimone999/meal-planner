@@ -1,29 +1,24 @@
-# Meal Planner — Apache reverse-proxy config
+# Meal Planner — server-wide reverse-proxy config.
 #
-# Installed by scripts/install-apache-config.sh. Replaces __PORT__ and
-# __ROOT_PATH__ placeholders at install time.
+# Installed by scripts/install-apache-config.sh as
+#   /etc/apache2/conf-available/meal-planner.conf
+# then enabled via `a2enconf meal-planner`. Placeholders __PORT__ and
+# __ROOT_PATH__ are substituted at install time.
 #
-# Mounts the app at http://<host>__ROOT_PATH__/ by proxying to a local
-# uvicorn container bound to 127.0.0.1:__PORT__. All /static/* and API
-# calls under __ROOT_PATH__ go through this vhost.
+# Deliberately NOT wrapped in a <VirtualHost> block. On a stock
+# Debian/Ubuntu Apache the default listener (`000-default.conf`) already
+# captures *:80 without a ServerName, so an additional VirtualHost on
+# *:80 doesn't get matched. Instead we add ProxyPass at server scope so
+# the rule applies to whichever vhost handles the request — including
+# the default one.
 
-<VirtualHost *:80>
-    ServerAdmin webmaster@localhost
-    # Serve directly on the machine's IP — no ServerName.
+ProxyRequests Off
+ProxyPreserveHost On
+RequestHeader set X-Forwarded-Proto "%{REQUEST_SCHEME}s"
 
-    ErrorLog  ${APACHE_LOG_DIR}/meal-planner-error.log
-    CustomLog ${APACHE_LOG_DIR}/meal-planner-access.log combined
+# Canonicalise /meal-planner → /meal-planner/  (needed so ProxyPass
+# below, which is anchored on the trailing slash, actually matches).
+RedirectMatch permanent "^__ROOT_PATH__$" "__ROOT_PATH__/"
 
-    # Trailing-slash canonicalisation: /__ROOT_PATH__ → /__ROOT_PATH__/
-    RedirectMatch permanent "^__ROOT_PATH__$" "__ROOT_PATH__/"
-
-    ProxyRequests Off
-    ProxyPreserveHost On
-    RequestHeader set X-Forwarded-Proto "%{REQUEST_SCHEME}s"
-
-    <Location "__ROOT_PATH__/">
-        Require all granted
-        ProxyPass         "http://127.0.0.1:__PORT__/" nocanon
-        ProxyPassReverse  "http://127.0.0.1:__PORT__/"
-    </Location>
-</VirtualHost>
+ProxyPass         "__ROOT_PATH__/" "http://127.0.0.1:__PORT__/" nocanon
+ProxyPassReverse  "__ROOT_PATH__/" "http://127.0.0.1:__PORT__/"
